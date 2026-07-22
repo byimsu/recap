@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Recap",
+    "slug": "recap",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./src/assets/android-icon-foreground.png",
+        "backgroundImage": "./src/assets/android-icon-background.png",
+        "monochromeImage": "./src/assets/android-icon-monochrome.png"
+      },
+      "package": "com.imsu.recap"
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
+    },
+    "plugins": [
+      "expo-sharing",
+      "@react-native-community/datetimepicker",
+      [
+        "react-native-file-viewer-turbo",
+        {
+          "mimeTypes": ["*/*"]
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7477c38b-f669-4a71-9699-d8ee8ff1e717"
+      }
+    },
+    "owner": "imsu-team"
+  }
+}
