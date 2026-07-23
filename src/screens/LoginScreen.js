@@ -9,23 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
-import { auth } from "../api/firebase";
-import {
-  signInWithEmailAndPassword,
-  sendPasswordResetEmail,
-  signOut
-} from "firebase/auth";
-import { isFirebaseReady } from '../api/firebase';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
   const { colors } = useTheme();
-  const { loginAsGuest } = useAuth();
+  const { loginAsGuest, login, sendPasswordReset, getAuthErrorMessage } = useAuth();
+
   const [mode, setMode] = useState("signin"); // "signin" | "reset"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -34,39 +27,20 @@ export default function LoginScreen({ navigation }) {
   const [error, setError] = useState("");
   const [resetSent, setResetSent] = useState(false);
 
-  function friendlyError(code) {
-    switch (code) {
-      case "auth/invalid-email":
-        return "That email address doesn't look right.";
-      case "auth/user-not-found":
-      case "auth/invalid-credential":
-        return "No account found with those details.";
-      case "auth/wrong-password":
-        return "Incorrect password. Try again.";
-      case "auth/too-many-requests":
-        return "Too many attempts. Please wait a moment and try again.";
-      default:
-        return "Something went wrong. Please try again.";
-    }
-  }
-
-  function handleLogin() {
-    if (!isFirebaseReady()) {
-      Alert.alert("Configuration Error", "Firebase is not initialized. Please check your internet connection or build configuration.");
-      return;
-    }
+  async function handleLogin() {
     if (!email.trim() || !password.trim()) {
       setError("Please enter both email and password.");
       return;
     }
     setError("");
     setLoading(true);
-
-    signInWithEmailAndPassword(auth, email.trim(), password.trim())
-      .catch((err) => {
-        setError(friendlyError(err.code));
-        setLoading(false); // Only turn off loading if it fails.
-      });
+    try {
+      await login(email, password);
+      // Loading stays on -- onAuthStateChanged will navigate away
+    } catch (err) {
+      setError(getAuthErrorMessage(err.code));
+      setLoading(false);
+    }
   }
 
   async function handleGuestLogin() {
@@ -81,11 +55,7 @@ export default function LoginScreen({ navigation }) {
     }
   }
 
-  function handleReset() {
-    if (!isFirebaseReady()) {
-      Alert.alert("Configuration Error", "Firebase is not initialized.");
-      return;
-    }
+  async function handleReset() {
     if (!email.trim()) {
       setError("Enter your email to reset your password.");
       return;
@@ -93,14 +63,14 @@ export default function LoginScreen({ navigation }) {
     setError("");
     setLoading(true);
     setResetSent(false);
-    sendPasswordResetEmail(auth, email.trim())
-      .then(() => {
-        setResetSent(true);
-      })
-      .catch((err) => {
-        setError(friendlyError(err.code));
-      })
-      .finally(() => setLoading(false));
+    try {
+      await sendPasswordReset(email);
+      setResetSent(true);
+    } catch (err) {
+      setError(getAuthErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
   }
 
   function switchMode(next) {

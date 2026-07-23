@@ -14,9 +14,15 @@ const firebaseConfig = {
 
 let app, auth, db;
 
+const REQUIRED_KEYS = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
+const missingKeys = REQUIRED_KEYS.filter((key) => !firebaseConfig[key]);
+
 try {
-  if (!firebaseConfig.apiKey) {
-    console.error("Firebase API Key is missing! Ensure EXPO_PUBLIC_FIREBASE_API_KEY is set in your environment.");
+  if (missingKeys.length > 0) {
+    console.error(
+      `Firebase configuration incomplete. Missing: ${missingKeys.join(', ')}. ` +
+      'Ensure all EXPO_PUBLIC_FIREBASE_* variables are set in your environment.'
+    );
   } else {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     auth = initializeAuth(app, {

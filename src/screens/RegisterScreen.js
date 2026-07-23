@@ -9,17 +9,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
 } from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import Feather from "@expo/vector-icons/Feather";
-import { auth, db, isFirebaseReady } from "../api/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function RegisterScreen({ navigation }) {
   const { colors } = useTheme();
+  const { register, getAuthErrorMessage } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -27,55 +25,21 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  function friendlyError(code) {
-    switch (code) {
-      case "auth/invalid-email":
-        return "That email address doesn't look right.";
-      case "auth/email-already-in-use":
-        return "An account with that email already exists.";
-      case "auth/weak-password":
-        return "Password should be at least 6 characters.";
-      default:
-        return "Something went wrong. Please try again.";
-    }
-  }
-
-  function handleRegister() {
-    if (!isFirebaseReady()) {
-      Alert.alert("Configuration Error", "Firebase is not initialized. Please check your build settings.");
-      return;
-    }
+  async function handleRegister() {
     if (!name.trim() || !email.trim() || !password.trim()) {
       setError("Please fill in your name, email, and password.");
       return;
     }
     setError("");
     setLoading(true);
-
-    createUserWithEmailAndPassword(auth, email.trim(), password.trim())
-      .then((result) => {
-        const userData = {
-          date_created: new Date().toISOString(),
-          email: email.trim(),
-          uid: result.user.uid,
-          name: name.trim(),
-          is_active: true,
-        };
-
-        const userRef = doc(db, "users", result.user.uid);
-        setDoc(userRef, userData)
-          .then(() => {
-            navigation.navigate("Login");
-          })
-          .catch((err) => {
-            setError("Account created, but saving your profile failed.");
-            console.log(err);
-          });
-      })
-      .catch((err) => {
-        setError(friendlyError(err.code));
-      })
-      .finally(() => setLoading(false));
+    try {
+      await register(email, password, name);
+      navigation.navigate("Login");
+    } catch (err) {
+      setError(getAuthErrorMessage(err.code));
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
