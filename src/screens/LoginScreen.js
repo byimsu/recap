@@ -36,7 +36,12 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await login(email, password);
-      // Loading stays on -- onAuthStateChanged will navigate away
+      setTimeout(() => {
+        const state = navigation.getState();
+        if (state?.routeNames?.includes('MainApp')) {
+          navigation.reset({ index: 0, routes: [{ name: 'MainApp' }] });
+        }
+      }, 50);
     } catch (err) {
       setError(getAuthErrorMessage(err.code));
       setLoading(false);
@@ -48,6 +53,12 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await loginAsGuest();
+      setTimeout(() => {
+        const state = navigation.getState();
+        if (state?.routeNames?.includes('MainApp')) {
+          navigation.reset({ index: 0, routes: [{ name: 'MainApp' }] });
+        }
+      }, 50);
     } catch (err) {
       console.error("Guest login error:", err);
       setError("Failed to start guest mode.");
@@ -94,26 +105,22 @@ export default function LoginScreen({ navigation }) {
         }}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          onPress={() => {
-            if (mode === "reset") {
-              switchMode("signin");
-            } else {
-              navigation.goBack();
-            }
-          }}
-          style={{
-            width: 42,
-            height: 42,
-            borderRadius: 21,
-            borderWidth: 1,
-            borderColor: colors.border,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
-        </TouchableOpacity>
+        {mode === "reset" && (
+          <TouchableOpacity
+            onPress={() => switchMode("signin")}
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: 21,
+              borderWidth: 1,
+              borderColor: colors.border,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons name="arrow-back" size={20} color={colors.text} />
+          </TouchableOpacity>
+        )}
 
         <Text
           style={{

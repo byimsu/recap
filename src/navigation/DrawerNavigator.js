@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView } from '@react-navigation/drawer';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import { auth, db } from '../api/firebase';
 import { getLocalStudyData, formatLocalDate } from '../storage/studyStorage';
-import { doc, getDoc } from 'firebase/firestore';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { getProfile } from '../services/profileService';
 
 // Screen Imports
 import HomeScreen from '../screens/HomeScreen';
@@ -24,35 +23,33 @@ const NAV_ITEMS = [
   { name: "UserProgress", label: "Progress", icon: "bar-chart-2" },
   { name: "Deadlines", label: "Deadlines", icon: "calendar" },
   { name: "StudySchedule", label: "Study Schedule", icon: "bell" },
+  { name: "Profile", label: "Profile", icon: "user" },
   { name: "Settings", label: "Settings", icon: "settings" },
   { name: "Trash", label: "Trash", icon: "trash-2" },
 ];
 
 function CustomDrawerContent(props) {
   const { colors } = useTheme();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const [streak, setStreak] = useState(0);
-  const [userName, setUserName] = useState("User");
-  const user = auth?.currentUser;
+  const [profile, setProfile] = useState(null);
 
   useFocusEffect(
     useCallback(() => {
-      const loadProfile = async () => {
-        if (user && !user.isAnonymous && db) {
-          try {
-            const userRef = doc(db, "users", user.uid);
-            const docSnap = await getDoc(userRef);
-            if (docSnap.exists()) {
-              setUserName(docSnap.data().name || "User");
-            }
-          } catch (e) {
-            console.error("Error loading profile:", e);
+      let isMounted = true;
+      const fetchProfile = async () => {
+        if (!user) return;
+        try {
+          const data = await getProfile(user);
+          if (isMounted) {
+            setProfile(data);
           }
-        } else {
-          setUserName("Guest");
+        } catch (e) {
+          console.error("Error loading profile in drawer:", e);
         }
       };
-      loadProfile();
+      fetchProfile();
+      return () => { isMounted = false; };
     }, [user])
   );
 
@@ -120,19 +117,35 @@ function CustomDrawerContent(props) {
   };
 
   const activeRouteName = props.state.routeNames[props.state.index];
+  const userName = profile?.displayName || (user?.isGuest ? 'Guest' : 'User');
+  const photoURL = profile?.photoURL;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg }}>
       <DrawerContentScrollView {...props} contentContainerStyle={{ paddingTop: "16%", paddingHorizontal: "6%" }}>
-        <View style={styles.profileHeader}>
-          <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-             <Text style={[styles.avatarText, { color: colors.buttonText }]}>{userName.charAt(0).toUpperCase()}</Text>
+        <TouchableOpacity
+          style={styles.profileHeader}
+          onPress={() => props.navigation.navigate('Profile')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.avatar, { backgroundColor: colors.primary, overflow: 'hidden' }]}>
+            {photoURL ? (
+              <Image
+                source={{ uri: photoURL }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={[styles.avatarText, { color: colors.buttonText }]}>
+                {userName.charAt(0).toUpperCase()}
+              </Text>
+            )}
           </View>
           <View style={{ marginLeft: 16, flex: 1 }}>
             <Text style={[styles.userName, { color: colors.text }]} numberOfLines={1}>{userName}</Text>
-            <Text style={[styles.userEmail, { color: colors.subtext }]} numberOfLines={1}>{user?.email || "Local Session"}</Text>
           </View>
-        </View>
+          <Feather name="chevron-right" size={16} color={colors.subtext} />
+        </TouchableOpacity>
 
         {user?.isAnonymous && (
           <TouchableOpacity

@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }) => {
   const isGuest = user?.uid === GUEST_USER.uid;
   const isAuthenticated = user !== null;
   const emailVerified = isGuest ? false : (user?.emailVerified ?? false);
-  const isLoading = authStatus !== 'idle';
+  const isLoading = authStatus === 'initializing';
 
   return (
     <AuthContext.Provider value={{

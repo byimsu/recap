@@ -30,14 +30,22 @@ export default function RegisterScreen({ navigation }) {
       setError("Please fill in your name, email, and password.");
       return;
     }
+    if (password.trim().length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
       await register(email, password, name);
-      navigation.navigate("Login");
+      setTimeout(() => {
+        const state = navigation.getState();
+        if (state?.routeNames?.includes('MainApp')) {
+          navigation.reset({ index: 0, routes: [{ name: 'MainApp' }] });
+        }
+      }, 50);
     } catch (err) {
       setError(getAuthErrorMessage(err.code));
-    } finally {
       setLoading(false);
     }
   }

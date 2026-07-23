@@ -84,9 +84,16 @@ export function deadlinesOnDate(deadlines, dateString) {
  * upcoming list, e.g. "Today", "Tomorrow", "in 4 days".
  */
 export function daysUntilLabel(dateString) {
+  if (!dateString) return '';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const target = new Date(dateString + 'T00:00:00');
+
+  const parts = dateString.split('-').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return dateString;
+
+  const target = new Date(parts[0], parts[1] - 1, parts[2]);
+  target.setHours(0, 0, 0, 0);
+
   const diffDays = Math.round((target - today) / 86400000);
 
   if (diffDays === 0) return 'Today';

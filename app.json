@@ -25,6 +25,12 @@
       "expo-sharing",
       "@react-native-community/datetimepicker",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow Recap to access your photos to set a profile picture."
+        }
+      ],
+      [
         "react-native-file-viewer-turbo",
         {
           "mimeTypes": [

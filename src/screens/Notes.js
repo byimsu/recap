@@ -73,6 +73,7 @@ export default function NotesScreen() {
   };
 
   const handleLongPress = (subject) => {
+    if (subject.isSystem) return;
     setSelectedSubject(subject);
     setIsOptionsModalVisible(true);
   };
@@ -138,7 +139,7 @@ export default function NotesScreen() {
       activeOpacity={0.7}
     >
       <View style={[styles.subjectIcon, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-        <Ionicons name="folder-open" size={24} color={colors.subtext} />
+        <Ionicons name={item.isSystem ? "archive-outline" : "folder-open"} size={24} color={colors.subtext} />
       </View>
       <View style={styles.subjectTextContainer}>
         <Text style={[styles.subjectTitle, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>

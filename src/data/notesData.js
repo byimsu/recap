@@ -61,6 +61,21 @@ export async function renameNote(noteId, newName) {
   }
 }
 
+export async function moveNoteToSubject(noteId, targetSubjectId) {
+  try {
+    const notesKey = await getScopedKey(BASE_NOTES_KEY);
+    const allNotes = await getAllNotes();
+    const updatedNotes = allNotes.map((n) =>
+      n.id === noteId ? { ...n, subjectId: targetSubjectId } : n
+    );
+    await AsyncStorage.setItem(notesKey, JSON.stringify(updatedNotes));
+    return updatedNotes;
+  } catch (error) {
+    console.error("Error moving note:", error);
+    throw error;
+  }
+}
+
 export async function deleteNote(noteId) {
   try {
     const notesKey = await getScopedKey(BASE_NOTES_KEY);
@@ -129,10 +144,12 @@ export async function loadAndCleanTrash() {
       const daysInTrash = Math.floor((now - new Date(note.deletedAt)) / (1000 * 60 * 60 * 24));
       if (daysInTrash >= 30) {
         hasExpiredItems = true;
-        try {
-          await FileSystem.deleteAsync(note.uri, { idempotent: true });
-        } catch (fileErr) {
-          console.log("File already removed from device:", note.uri);
+        if (note.uri) {
+          try {
+            await FileSystem.deleteAsync(note.uri, { idempotent: true });
+          } catch (fileErr) {
+            // File already removed or missing
+          }
         }
       } else {
         validTrash.push(note);
@@ -177,10 +194,12 @@ export async function restoreNote(noteToRestore, currentTrashedNotes = []) {
 
 export async function deleteNotePermanently(noteId, noteUri, currentTrashedNotes = []) {
   try {
-    try {
-      await FileSystem.deleteAsync(noteUri, { idempotent: true });
-    } catch (fileErr) {
-      console.log("File already gone:", fileErr);
+    if (noteUri) {
+      try {
+        await FileSystem.deleteAsync(noteUri, { idempotent: true });
+      } catch (fileErr) {
+        // File already gone
+      }
     }
     const trashKey = await getScopedKey(BASE_TRASH_KEY);
     const updatedTrash = currentTrashedNotes.filter((n) => n.id !== noteId);
@@ -195,10 +214,12 @@ export async function deleteNotePermanently(noteId, noteUri, currentTrashedNotes
 export async function emptyTrash(trashedNotes = []) {
   try {
     for (let note of trashedNotes) {
-      try {
-        await FileSystem.deleteAsync(note.uri, { idempotent: true });
-      } catch (e) {
-        console.log("Skipped missing file");
+      if (note.uri) {
+        try {
+          await FileSystem.deleteAsync(note.uri, { idempotent: true });
+        } catch (e) {
+          // Skipped missing file
+        }
       }
     }
     const trashKey = await getScopedKey(BASE_TRASH_KEY);
@@ -243,7 +264,7 @@ export async function clearAllNotesAndTrash() {
         try {
           await FileSystem.deleteAsync(note.uri, { idempotent: true });
         } catch (e) {
-          console.log("File already deleted or unreadable");
+          // File already deleted or unreadable
         }
       }
     }

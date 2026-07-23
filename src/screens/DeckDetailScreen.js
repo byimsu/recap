@@ -2,7 +2,8 @@ import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, Platform, ActivityIndicator
 } from 'react-native';
-import { useRoute, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { getDeckCards, deleteCardFromDeck, updateCardInDeck } from '../data/flashcardsData';
 import { useTheme } from '../context/ThemeContext';
 

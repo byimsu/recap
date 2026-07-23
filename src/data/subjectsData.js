@@ -34,14 +34,31 @@ export async function loadSubjectsWithNoteCounts() {
   ]);
 
   const subjects = parseArray(storedSubjects);
-  const notesCount = parseArray(storedNotes).reduce((counts, note) => {
-    if (note.subjectId) {
-      counts[note.subjectId] = (counts[note.subjectId] || 0) + 1;
-    }
-    return counts;
-  }, {});
+  const allNotes = parseArray(storedNotes);
 
-  return { subjects, notesCount };
+  const notesCount = {};
+  let uncategorizedCount = 0;
+
+  allNotes.forEach((note) => {
+    if (note.subjectId && note.subjectId !== 'uncategorized') {
+      notesCount[note.subjectId] = (notesCount[note.subjectId] || 0) + 1;
+    } else {
+      uncategorizedCount++;
+    }
+  });
+
+  notesCount['uncategorized'] = uncategorizedCount;
+
+  const finalSubjects = [...subjects];
+  if (uncategorizedCount > 0) {
+    finalSubjects.push({
+      id: 'uncategorized',
+      name: 'Uncategorized',
+      isSystem: true,
+    });
+  }
+
+  return { subjects: finalSubjects, notesCount };
 }
 
 export async function createSubject(name) {
@@ -80,10 +97,5 @@ export async function deleteSubject(subjectId) {
     AsyncStorage.setItem(notesKey, JSON.stringify(notes)),
   ]);
 
-  return { subjects, notesCount: notes.reduce((counts, note) => {
-    if (note.subjectId) {
-      counts[note.subjectId] = (counts[note.subjectId] || 0) + 1;
-    }
-    return counts;
-  }, {}) };
+  return loadSubjectsWithNoteCounts();
 }

@@ -1,7 +1,10 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import { loadDeckCards, saveDeckCards, shuffleCards, getDueCards } from '../data/reviewData';
+import { loadDeckCards, saveDeckCards, shuffleCards, getDueCards, rateCard } from '../data/reviewData';
+import { saveStudyMinutes } from '../storage/studyStorage';
 import { useTheme } from '../context/ThemeContext';
 
 export default function ReviewScreen() {
@@ -38,7 +41,6 @@ export default function ReviewScreen() {
 
     try {
       await saveStudyMinutes(minutesSpent);
-      console.log(`Successfully logged ${minutesSpent} minutes locally and synced if needed.`);
     } catch (e) {
       console.error("Error logging time:", e);
     }
@@ -117,25 +119,7 @@ export default function ReviewScreen() {
         return;
       }
 
-      const { interval, repetition, efactor } = calculateSM2(
-        quality,
-        currentCard.repetition || 0,
-        currentCard.efactor || 2.5,
-        currentCard.interval || 0
-      );
-
-      const nextReviewDate = new Date();
-      nextReviewDate.setDate(nextReviewDate.getDate() + interval);
-
-      const updatedCard = {
-        ...currentCard,
-        interval,
-        repetition,
-        efactor,
-        nextReviewDate: nextReviewDate.toISOString()
-      };
-
-      const updatedAllCards = allCards.map(c => c.id === currentCard.id ? updatedCard : c);
+      const updatedAllCards = rateCard(allCards, currentCard, quality);
       await saveDeckCards(deckId, updatedAllCards);
 
       cardsReviewedRef.current += 1;

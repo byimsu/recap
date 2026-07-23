@@ -67,7 +67,6 @@ export const saveStudyMinutes = async (minutes) => {
           [todayStr]: newTotal
         }
       }, { merge: true });
-      console.log(`Synced ${newTotal} total minutes to Firebase for ${todayStr}`);
     }
 
     return updatedData;

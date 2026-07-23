@@ -22,6 +22,7 @@ import Settings from "./src/screens/Settings";
 import Trash from "./src/screens/Trash";
 import StudySchedule from "./src/screens/StudySchedule";
 import Deadlines from "./src/screens/Deadlines";
+import ProfileScreen from "./src/screens/ProfileScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -56,6 +57,9 @@ function RootNavigator() {
             <Stack.Screen name="Trash" component={Trash} />
             <Stack.Screen name="StudySchedule" component={StudySchedule} />
             <Stack.Screen name="Deadlines" component={Deadlines} />
+            <Stack.Screen name="Profile" component={ProfileScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
           </>
         ) : (
           <>

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 
 export const REMINDER_IDENTIFIER = 'daily-study-reminder';
@@ -16,6 +17,13 @@ export async function getStudyReminder() {
 }
 
 export async function requestStudyReminderPermission() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+    });
+  }
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   if (existingStatus === 'granted') return true;
   const { status } = await Notifications.requestPermissionsAsync();
@@ -23,17 +31,33 @@ export async function requestStudyReminderPermission() {
 }
 
 export async function scheduleStudyReminder(hour, minute) {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('default', {
+      name: 'Default',
+      importance: Notifications.AndroidImportance.MAX,
+      vibrationPattern: [0, 250, 250, 250],
+    });
+  }
+
   await Notifications.cancelScheduledNotificationAsync(REMINDER_IDENTIFIER).catch(() => {});
+
+  const triggerType = Notifications.SchedulableTriggerInputTypes?.DAILY || 'daily';
+
   await Notifications.scheduleNotificationAsync({
     identifier: REMINDER_IDENTIFIER,
     content: {
       title: 'Keep your streak alive',
       body: 'Take a few minutes to review your notes today.',
     },
-    trigger: { type: 'daily', hour, minute },
+    trigger: {
+      type: triggerType,
+      hour,
+      minute,
+    },
   });
 }
 
 export async function cancelStudyReminder() {
-  await Notifications.cancelScheduledNotificationAsync(REMINDER_IDENTIFIER);
+  await Notifications.cancelScheduledNotificationAsync(REMINDER_IDENTIFIER).catch(() => {});
 }
+
