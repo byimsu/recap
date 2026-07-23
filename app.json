@@ -27,9 +27,12 @@
       [
         "react-native-file-viewer-turbo",
         {
-          "mimeTypes": ["*/*"]
+          "mimeTypes": [
+            "*/*"
+          ]
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {
