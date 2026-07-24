@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { getAllDecks, createDeck, deleteDeck } from '../data/flashcardsData';
 import { useTheme } from '../context/ThemeContext';
 
@@ -73,41 +74,49 @@ export default function Flashcards() {
     Alert.alert("Coming Soon", "Importing decks is not yet implemented.");
   };
 
-  const renderDeckItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.deckCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={() => navigation.navigate("DeckDetail", { deckId: item.id, deckName: item.title })}
-      onLongPress={() => handleDeleteDeck(item)}
-      activeOpacity={0.7}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.deckTitle, { color: colors.text }]} numberOfLines={1}>{item.title}</Text>
-        <Text style={[styles.deckStats, { color: colors.subtext }]}>{item.cardCount || 0} Cards</Text>
-      </View>
-
-      <View style={styles.deckActions}>
-        <TouchableOpacity
-          style={[styles.addCardBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
-          onPress={() => navigation.navigate("AddCard", { deckId: item.id })}
-        >
-          <Feather name="plus" size={18} color={colors.text} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.studyBtn, { backgroundColor: colors.button }]}
-          onPress={() => {
-            if ((item.cardCount || 0) === 0) {
-              Alert.alert("Empty Deck", "Add some cards to this deck before studying!");
-            } else {
+  const renderDeckItem = ({ item }) => {
+    const isEmpty = (item.cardCount || 0) === 0;
+    
+    return (
+      <TouchableOpacity
+        style={[styles.deckCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+        onPress={() => navigation.navigate("DeckDetail", { deckId: item.id, deckName: item.title })}
+        onLongPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+          handleDeleteDeck(item);
+        }}
+        activeOpacity={0.7}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.deckTitle, { color: colors.text }]} numberOfLines={1}>{item.title}</Text>
+          <Text style={[styles.deckStats, { color: colors.subtext }]}>{item.cardCount || 0} Cards</Text>
+        </View>
+  
+        <View style={styles.deckActions}>
+          <TouchableOpacity
+            style={[styles.addCardBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
+            onPress={() => navigation.navigate("AddCard", { deckId: item.id })}
+          >
+            <Feather name="plus" size={18} color={colors.text} />
+          </TouchableOpacity>
+  
+          <TouchableOpacity
+            style={[
+              styles.studyBtn, 
+              { backgroundColor: isEmpty ? colors.border : colors.button },
+              isEmpty && { opacity: 0.5 }
+            ]}
+            disabled={isEmpty}
+            onPress={() => {
               navigation.navigate("Review", { deckId: item.id, deckTitle: item.title });
-            }
-          }}
-        >
-          <Text style={[styles.studyBtnText, { color: colors.buttonText }]}>Study</Text>
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
+            }}
+          >
+            <Text style={[styles.studyBtnText, { color: isEmpty ? colors.subtext : colors.buttonText }]}>Study</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={{ backgroundColor: colors.bg, flex: 1 }}>
@@ -160,7 +169,13 @@ export default function Flashcards() {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingTop: 24, paddingBottom: 40 }}
             ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: colors.subtext }]}>You don't have any local decks yet. Create or import one to start studying!</Text>
+              <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Ionicons name="albums-outline" size={32} color={colors.subtext} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No flashcards yet</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                  Create a deck and add cards to start studying with spaced repetition.
+                </Text>
+              </View>
             }
           />
         )}
@@ -209,7 +224,25 @@ const styles = StyleSheet.create({
   addCardBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   studyBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
   studyBtnText: { fontWeight: '700' },
-  emptyText: { textAlign: 'center', marginTop: 40, lineHeight: 22 },
+  emptyContainer: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 18,
+  },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 },
   modalContent: { width: '100%', borderRadius: 20, padding: 24 },
   modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },

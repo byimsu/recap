@@ -150,14 +150,16 @@ export default function ReviewScreen() {
   if (isSessionComplete) {
     return (
       <View style={[styles.container, { backgroundColor: colors.bg, justifyContent: 'center', alignItems: 'center', paddingHorizontal: "6%" }]}>
-        <Text style={{ fontSize: 50 }}>🎉</Text>
-        <Text style={[styles.headerTitle, { color: colors.text }]}>All caught up!</Text>
-        <Text style={[styles.subtext, { color: colors.subtext, textAlign: 'center', marginTop: 12, marginBottom: 30 }]}>
-          {isCramMode
-            ? `You have finished your cram session for ${deckTitle}.`
-            : `You have reviewed all due cards for ${deckTitle}. Check back tomorrow!`
-          }
-        </Text>
+        <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 30, width: '100%' }]}>
+          <Ionicons name="checkmark-circle-outline" size={48} color={colors.primary} style={{ marginBottom: 16 }} />
+          <Text style={[styles.headerTitle, { color: colors.text, textAlign: 'center' }]}>All caught up!</Text>
+          <Text style={[styles.subtext, { color: colors.subtext, textAlign: 'center', marginTop: 12, lineHeight: 22 }]}>
+            {isCramMode
+              ? `You have finished your cram session for ${deckTitle}.`
+              : `You have reviewed all due cards for ${deckTitle}. Check back tomorrow!`
+            }
+          </Text>
+        </View>
 
         <TouchableOpacity
           style={[styles.actionBtn, { backgroundColor: colors.primary, width: '100%', alignItems: 'center', marginBottom: 12 }]}
@@ -261,7 +263,17 @@ const styles = StyleSheet.create({
   showAnswerBtn: { paddingVertical: 18, borderRadius: 100, alignItems: 'center' },
   showAnswerBtnText: { fontSize: 18, fontWeight: '700' },
   actionBtn: { paddingVertical: 14, paddingHorizontal: 24, borderRadius: 100 },
-  actionBtnText: { fontSize: 16, fontWeight: '700' },
+  actionBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  emptyContainer: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 32,
+    alignItems: "center",
+    justifyContent: "center",
+  },
 
   ratingsContainer: { alignItems: 'center' },
   ratingPrompt: { fontSize: 14, marginBottom: 16, fontWeight: '600' },

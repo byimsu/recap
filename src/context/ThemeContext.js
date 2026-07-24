@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ThemeContext = createContext();
@@ -9,7 +10,8 @@ const THEME_KEY = '@app_theme_preference';
 const AMOLED_KEY = '@app_amoled_preference';
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState('light'); // 'light' | 'dark'
+  const systemColorScheme = useColorScheme();
+  const [userTheme, setUserTheme] = useState(null); // null means 'system'
   const [isAmoled, setIsAmoled] = useState(false);
   const [isLoaded, setIsLoading] = useState(false);
 
@@ -18,7 +20,9 @@ export const ThemeProvider = ({ children }) => {
       try {
         const savedTheme = await AsyncStorage.getItem(THEME_KEY);
         const savedAmoled = await AsyncStorage.getItem(AMOLED_KEY);
-        if (savedTheme) setTheme(savedTheme);
+        if (savedTheme) {
+          setUserTheme(savedTheme === 'system' ? null : savedTheme);
+        }
         if (savedAmoled) setIsAmoled(savedAmoled === 'true');
       } catch (e) {
         console.error("Error loading theme prefs:", e);
@@ -29,10 +33,22 @@ export const ThemeProvider = ({ children }) => {
     loadPrefs();
   }, []);
 
+  const theme = userTheme || systemColorScheme || 'light';
+
   const toggleTheme = async () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(nextTheme);
+    setUserTheme(nextTheme);
     await AsyncStorage.setItem(THEME_KEY, nextTheme);
+  };
+
+  const setSystemTheme = async (useSystem) => {
+    if (useSystem) {
+      setUserTheme(null);
+      await AsyncStorage.setItem(THEME_KEY, 'system');
+    } else {
+      setUserTheme(theme);
+      await AsyncStorage.setItem(THEME_KEY, theme);
+    }
   };
 
   const toggleAmoled = async () => {
@@ -57,7 +73,7 @@ export const ThemeProvider = ({ children }) => {
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, isAmoled, toggleTheme, toggleAmoled, colors }}>
+    <ThemeContext.Provider value={{ theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors }}>
       {children}
     </ThemeContext.Provider>
   );

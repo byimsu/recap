@@ -23,6 +23,31 @@ import { loadSubjectsWithNoteCounts, createSubject } from '../data/subjectsData'
 import { getAllDeadlines, upcomingDeadlines, daysUntilLabel, DEADLINE_TYPE_META } from '../data/deadlinesData';
 import { useTheme } from '../context/ThemeContext';
 
+const RecentNoteItem = React.memo(({ note, subjectDisplay, colors, onPress }) => (
+  <TouchableOpacity
+    style={[styles.recentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+    onPress={() => onPress(note.uri)}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.recentIconBadge, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+      <Ionicons name="document-text" size={18} color={colors.text} />
+    </View>
+
+    <View style={styles.recentTextContainer}>
+      <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
+        {note.name}
+      </Text>
+      <Text style={[styles.recentMeta, { color: colors.subtext }]}>
+        {subjectDisplay} • {new Date(note.createdAt).toLocaleDateString()}
+      </Text>
+    </View>
+
+    <View style={[styles.recentOpenBadge, { backgroundColor: colors.bg }]}>
+      <Feather name="external-link" size={14} color={colors.subtext} />
+    </View>
+  </TouchableOpacity>
+));
+
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
@@ -109,7 +134,6 @@ export default function HomeScreen() {
       setSelectedFile(null);
       setIsCreatingNewSubject(false);
       setNewSubjectName("");
-      Alert.alert("Success", "Note saved successfully!");
     } catch (error) {
       console.error("Error saving note:", error);
       Alert.alert("Error", "Failed to save the note.");
@@ -134,6 +158,10 @@ export default function HomeScreen() {
       Alert.alert("Error", "Failed to create subject folder.");
     }
   };
+
+  const handleOpenNote = React.useCallback((uri) => {
+    openNote(uri);
+  }, []);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -295,29 +323,13 @@ export default function HomeScreen() {
             const subjectDisplay = subjectMatch ? subjectMatch.name : "Uncategorized";
 
             return (
-              <TouchableOpacity
+              <RecentNoteItem
                 key={note.id}
-                style={[styles.recentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => openNote(note.uri)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.recentIconBadge, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-                  <Ionicons name="document-text" size={18} color={colors.text} />
-                </View>
-
-                <View style={styles.recentTextContainer}>
-                  <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
-                    {note.name}
-                  </Text>
-                  <Text style={[styles.recentMeta, { color: colors.subtext }]}>
-                    {subjectDisplay} • {new Date(note.createdAt).toLocaleDateString()}
-                  </Text>
-                </View>
-
-                <View style={[styles.recentOpenBadge, { backgroundColor: colors.bg }]}>
-                  <Feather name="external-link" size={14} color={colors.subtext} />
-                </View>
-              </TouchableOpacity>
+                note={note}
+                subjectDisplay={subjectDisplay}
+                colors={colors}
+                onPress={handleOpenNote}
+              />
             );
           })
         )}

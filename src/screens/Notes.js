@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, memo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   View,
@@ -15,8 +15,29 @@ import {
 } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/ThemeContext';
 import { createSubject, deleteSubject, loadSubjectsWithNoteCounts, renameSubject } from '../data/subjectsData';
+
+const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) => (
+  <TouchableOpacity
+    style={[styles.subjectCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+    onPress={() => onPress(item)}
+    onLongPress={() => onLongPress(item)}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.subjectIcon, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+      <Ionicons name={item.isSystem ? "archive-outline" : "folder-open"} size={24} color={colors.subtext} />
+    </View>
+    <View style={styles.subjectTextContainer}>
+      <Text style={[styles.subjectTitle, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
+      <Text style={[styles.subjectStats, { color: colors.subtext }]}>
+        {notesCount[item.id] || 0} Document{(notesCount[item.id] !== 1) ? 's' : ''}
+      </Text>
+    </View>
+    <Feather name="chevron-right" size={20} color={colors.subtext} />
+  </TouchableOpacity>
+));
 
 export default function NotesScreen() {
   const navigation = useNavigation();
@@ -131,25 +152,24 @@ export default function NotesScreen() {
     );
   };
 
-  const renderSubjectItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.subjectCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-      onPress={() => navigation.navigate("SubjectNotes", { subjectId: item.id, subjectName: item.name })}
-      onLongPress={() => handleLongPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.subjectIcon, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-        <Ionicons name={item.isSystem ? "archive-outline" : "folder-open"} size={24} color={colors.subtext} />
-      </View>
-      <View style={styles.subjectTextContainer}>
-        <Text style={[styles.subjectTitle, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
-        <Text style={[styles.subjectStats, { color: colors.subtext }]}>
-          {notesCount[item.id] || 0} Document{(notesCount[item.id] !== 1) ? 's' : ''}
-        </Text>
-      </View>
-      <Feather name="chevron-right" size={20} color={colors.subtext} />
-    </TouchableOpacity>
-  );
+  const handlePressSubject = useCallback((item) => {
+    navigation.navigate("SubjectNotes", { subjectId: item.id, subjectName: item.name });
+  }, [navigation]);
+
+  const handleLongPressSubject = useCallback((item) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    handleLongPress(item);
+  }, [handleLongPress]);
+
+  const renderSubjectItem = useCallback(({ item }) => (
+    <SubjectItem 
+      item={item}
+      colors={colors}
+      notesCount={notesCount}
+      onPress={handlePressSubject}
+      onLongPress={handleLongPressSubject}
+    />
+  ), [colors, notesCount, handlePressSubject, handleLongPressSubject]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -182,9 +202,18 @@ export default function NotesScreen() {
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
             style={styles.scrollArea}
+            getItemLayout={(data, index) => (
+              { length: 80, offset: 80 * index, index } // Assuming approx 80px height
+            )}
             contentContainerStyle={{ paddingBottom: 40 }}
             ListEmptyComponent={
-              <Text style={[styles.emptyText, { color: colors.subtext }]}>You haven't created any subject folders yet. Tap the button above to start organizing!</Text>
+              <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Ionicons name="folder-open-outline" size={32} color={colors.subtext} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No folders yet</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                  Tap the "New Folder" button above to start organizing your study materials!
+                </Text>
+              </View>
             }
           />
         )}
@@ -289,7 +318,6 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, marginTop: 6, marginBottom: 24 },
 
   scrollArea: { flex: 1 },
-  emptyText: { fontSize: 15, lineHeight: 22, textAlign: 'center', marginTop: 40 },
 
   subjectCard: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 20, borderWidth: 1, marginBottom: 12 },
   subjectIcon: { width: 50, height: 50, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
@@ -314,5 +342,26 @@ const styles = StyleSheet.create({
   sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   sheetTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
   sheetBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
-  sheetBtnText: { fontSize: 16, fontWeight: '600', marginLeft: 16 }
+  sheetBtnText: { fontSize: 16, fontWeight: '600', marginLeft: 16 },
+  
+  // Empty State
+  emptyContainer: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 18,
+  },
 });

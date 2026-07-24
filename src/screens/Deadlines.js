@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, memo } from "react";
 import {
   Text,
   View,
@@ -53,6 +53,35 @@ function buildMonthGrid(year, month) {
   return weeks;
 }
 
+const CalendarDay = memo(({ day, dayIndex, dateString, bg, isToday, colors, onPress }) => (
+  <TouchableOpacity
+    onPress={() => onPress(dateString)}
+    style={{ flex: 1, aspectRatio: 1, padding: 3 }}
+  >
+    <View
+      style={{
+        flex: 1,
+        borderRadius: 10,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: bg ? bg : "transparent",
+        borderWidth: isToday && !bg ? 1.5 : 0,
+        borderColor: colors.text,
+      }}
+    >
+      <Text
+        style={{
+          color: bg ? "#ffffff" : colors.text,
+          fontSize: 14,
+          fontWeight: isToday ? "800" : "500",
+        }}
+      >
+        {day}
+      </Text>
+    </View>
+  </TouchableOpacity>
+));
+
 export default function Deadlines() {
   const navigation = useNavigation();
   const { colors } = useTheme();
@@ -101,15 +130,14 @@ export default function Deadlines() {
     setViewYear(y);
   }
 
-  function openDay(dateString) {
-    // Prevent adding deadlines to past dates
+  const openDay = useCallback((dateString) => {
     if (dateString < todayString) {
       Alert.alert("Past Date", "You cannot add a deadline to a day that has already passed.");
       return;
     }
     setSelectedDate(dateString);
     setIsDayModalVisible(true);
-  }
+  }, [todayString]);
 
   function openAddModal() {
     setNewTitle("");
@@ -253,37 +281,16 @@ export default function Deadlines() {
               const isToday = dateString === todayString;
 
               return (
-                <TouchableOpacity
+                <CalendarDay
                   key={dayIndex}
-                  onPress={() => openDay(dateString)}
-                  style={{
-                    flex: 1,
-                    aspectRatio: 1,
-                    padding: 3,
-                  }}
-                >
-                  <View
-                    style={{
-                      flex: 1,
-                      borderRadius: 10,
-                      justifyContent: "center",
-                      alignItems: "center",
-                      backgroundColor: bg ? bg : "transparent",
-                      borderWidth: isToday && !bg ? 1.5 : 0,
-                      borderColor: colors.text,
-                    }}
-                  >
-                    <Text
-                      style={{
-                        color: bg ? "#ffffff" : colors.text,
-                        fontSize: 14,
-                        fontWeight: isToday ? "800" : "500",
-                      }}
-                    >
-                      {day}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
+                  day={day}
+                  dayIndex={dayIndex}
+                  dateString={dateString}
+                  bg={bg}
+                  isToday={isToday}
+                  colors={colors}
+                  onPress={openDay}
+                />
               );
             })}
           </View>

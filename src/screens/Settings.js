@@ -56,7 +56,7 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
 
 export default function Settings() {
   const navigation = useNavigation();
-  const { theme, isAmoled, toggleTheme, toggleAmoled, colors } = useTheme();
+  const { theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors } = useTheme();
   const [clearing, setClearing] = useState(false);
 
   /**
@@ -146,18 +146,35 @@ export default function Settings() {
         </Text>
         <Row
           colors={colors}
-          icon={<Feather name={theme === 'dark' ? "moon" : "sun"} size={16} color={colors.text} />}
-          label="Dark Mode"
-          sublabel="Switch between light and dark"
+          icon={<Feather name="smartphone" size={16} color={colors.text} />}
+          label="Use System Theme"
+          sublabel="Automatically match device theme"
           right={
             <Switch
-              value={theme === 'dark'}
-              onValueChange={toggleTheme}
+              value={userTheme === null}
+              onValueChange={setSystemTheme}
               trackColor={{ false: "#e2e2e2", true: "#111111" }}
               thumbColor="#ffffff"
             />
           }
         />
+
+        {userTheme !== null && (
+          <Row
+            colors={colors}
+            icon={<Feather name={theme === 'dark' ? "moon" : "sun"} size={16} color={colors.text} />}
+            label="Dark Mode"
+            sublabel="Switch between light and dark"
+            right={
+              <Switch
+                value={theme === 'dark'}
+                onValueChange={toggleTheme}
+                trackColor={{ false: "#e2e2e2", true: "#111111" }}
+                thumbColor="#ffffff"
+              />
+            }
+          />
+        )}
 
         {theme === 'dark' && (
           <Row

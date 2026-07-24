@@ -16,6 +16,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import * as Haptics from 'expo-haptics';
 import { openNote, confirmDeleteNote, renameNote, getAllNotes, saveNote, moveNoteToSubject } from '../data/notesData';
 import { getAllSubjects } from '../data/subjectsData';
 import { useTheme } from '../context/ThemeContext';
@@ -101,7 +102,6 @@ export default function SubjectNotesScreen() {
 
         const updatedNotes = await saveNote(newNote);
         setNotes(filterNotes(updatedNotes));
-        Alert.alert("Success", `"${pickedFile.name}" added to ${subjectName}!`);
       }
     } catch (error) {
       console.error("Error uploading note in subject:", error);
@@ -110,6 +110,7 @@ export default function SubjectNotesScreen() {
   };
 
   const handleLongPressNote = (note) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     setSelectedNote(note);
     setIsOptionsModalVisible(true);
   };
@@ -196,7 +197,13 @@ export default function SubjectNotesScreen() {
 
         <ScrollView showsVerticalScrollIndicator={false} style={{ marginTop: 10 }}>
           {notes.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.subtext }]}>No notes in this subject yet. Upload from the Home screen or tap Upload File above.</Text>
+            <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Ionicons name="document-text-outline" size={32} color={colors.subtext} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No documents yet</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                Upload files from the Home screen or tap "Upload File" above to add study materials here.
+              </Text>
+            </View>
           ) : (
             notes.map((note) => (
               <TouchableOpacity
@@ -380,7 +387,25 @@ const styles = StyleSheet.create({
   actionsContainer: { flexDirection: 'row', alignItems: 'center' },
   actionBtn: { padding: 8, marginLeft: 4 },
 
-  emptyText: { fontSize: 14 },
+  emptyContainer: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 28,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 20,
+  },
+  emptyTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginTop: 12,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    textAlign: "center",
+    marginTop: 6,
+    lineHeight: 18,
+  },
 
   // Modal Styles
   modalOverlay: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', padding: 20 },
