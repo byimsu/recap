@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Text, View, TouchableOpacity, Switch, Alert, ActivityIndicator } from "react-native";
-import { ArrowLeft, ChevronRight, Palette, Smartphone, Moon, Sun, Trash2, Download, Upload } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, Palette, Smartphone, Moon, Sun, Trash2, Zap } from 'lucide-react-native';
 import { useNavigation } from "@react-navigation/native";
 import { clearAllNotesToTrash } from '../data/notesData';
 import { useTheme } from '../context/ThemeContext';
@@ -12,6 +12,9 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
     <Wrapper
       onPress={onPress}
       disabled={disabled}
+      activeOpacity={0.75}
+      accessibilityLabel={label}
+      accessibilityRole={onPress ? 'button' : undefined}
       style={{
         flexDirection: "row",
         alignItems: "center",
@@ -26,6 +29,7 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
       }}
     >
       <View
+        accessible={false}
         style={{
           width: 36,
           height: 36,
@@ -54,7 +58,7 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
 
 export default function Settings() {
   const navigation = useNavigation();
-  const { theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors } = useTheme();
+  const { theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, isHapticsEnabled, toggleHaptics, colors } = useTheme();
   const [clearing, setClearing] = useState(false);
 
   async function performClearCache() {
@@ -84,22 +88,16 @@ export default function Settings() {
     );
   }
 
-  function handleExport() {
-    Alert.alert("Export", "yet to be implemented");
-  }
-
-  function handleImport() {
-    Alert.alert("Import", "yet to be implemented");
-  }
-
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: colors.bg, flex: 1 }}>
       <View style={{ paddingHorizontal: "6%", paddingTop: 16 }}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
           style={{
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
             borderRadius: 10,
             borderWidth: 1,
             borderColor: colors.border,
@@ -108,7 +106,7 @@ export default function Settings() {
             alignItems: "center",
           }}
         >
-          <ArrowLeft size={20} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} accessible={false} />
         </TouchableOpacity>
 
         <Text
@@ -189,6 +187,21 @@ export default function Settings() {
           />
         )}
 
+        <Row
+          colors={colors}
+          icon={<Zap size={16} color={colors.accent} />}
+          label="Haptic Feedback"
+          sublabel="Tactile response on press interactions"
+          right={
+            <Switch
+              value={isHapticsEnabled !== false}
+              onValueChange={toggleHaptics}
+              trackColor={{ false: colors.border, true: colors.accent }}
+              thumbColor="#ffffff"
+            />
+          }
+        />
+
         <Text
           style={{
             color: colors.subtext,
@@ -215,36 +228,6 @@ export default function Settings() {
           sublabel="Moves all uploaded notes to Trash"
           onPress={handleClearCache}
           disabled={clearing}
-          right={<ChevronRight size={17} color={colors.subtext} />}
-        />
-
-        <Text
-          style={{
-            color: colors.subtext,
-            fontSize: 11,
-            fontWeight: "700",
-            textTransform: "uppercase",
-            letterSpacing: 0.8,
-            marginTop: 16,
-            marginBottom: 10,
-          }}
-        >
-          Data
-        </Text>
-        <Row
-          colors={colors}
-          icon={<Download size={16} color={colors.accent} />}
-          label="Export Data"
-          sublabel="Back up notes and flashcards"
-          onPress={handleExport}
-          right={<ChevronRight size={17} color={colors.subtext} />}
-        />
-        <Row
-          colors={colors}
-          icon={<Upload size={16} color={colors.accent} />}
-          label="Import Data"
-          sublabel="Restore from a backup file"
-          onPress={handleImport}
           right={<ChevronRight size={17} color={colors.subtext} />}
         />
       </View>

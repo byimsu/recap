@@ -22,20 +22,25 @@ import { openNote, confirmDeleteNote, renameNote, getAllNotes, saveNote, moveNot
 import { getAllSubjects } from '../data/subjectsData';
 import { useTheme } from '../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated from 'react-native-reanimated';
+import AnimatedPressable from '../components/common/AnimatedPressable';
 
 const NoteItem = memo(({ note, colors, onOpen, onLongPress }) => {
   const handleOpen = useCallback(() => onOpen(note.uri), [note.uri, onOpen]);
   const handleLong = useCallback(() => onLongPress(note), [note, onLongPress]);
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
+      type="row"
+      sharedTransitionTag={`note-card-${note.id}`}
       style={[styles.noteRow, { borderBottomColor: colors.border }]}
       onPress={handleOpen}
       onLongPress={handleLong}
-      activeOpacity={0.7}
+      accessibilityLabel={note.name}
+      accessibilityRole="button"
     >
-      <View style={[styles.noteIconBadge, { backgroundColor: colors.accentSoft }]}>
-        <FileText size={16} color={colors.accent} />
+      <View style={[styles.noteIconBadge, { backgroundColor: colors.accentSoft }]} accessible={false}>
+        <FileText size={16} color={colors.accent} accessible={false} />
       </View>
       <View style={styles.noteInfo}>
         <Text style={[styles.noteName, { color: colors.text }]} numberOfLines={1}>{note.name}</Text>
@@ -44,11 +49,13 @@ const NoteItem = memo(({ note, colors, onOpen, onLongPress }) => {
       <TouchableOpacity
         onPress={handleLong}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        accessibilityLabel="Note options"
+        accessibilityRole="button"
         style={{ padding: 6 }}
       >
-        <MoreVertical size={17} color={colors.subtext} />
+        <MoreVertical size={17} color={colors.subtext} accessible={false} />
       </TouchableOpacity>
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 });
 
@@ -204,24 +211,33 @@ export default function SubjectNotesScreen() {
       <View style={{ flex: 1, paddingHorizontal: "6%", paddingTop: 16, paddingBottom: "10%" }}>
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <ArrowLeft size={20} color={colors.text} />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+            style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+          >
+            <ArrowLeft size={20} color={colors.text} accessible={false} />
           </TouchableOpacity>
 
           {notes.length > 0 && (
             <TouchableOpacity
               onPress={handleUploadNote}
+              accessibilityLabel="Upload file"
+              accessibilityRole="button"
               style={[styles.uploadButton, { backgroundColor: colors.accent }]}
               activeOpacity={0.8}
             >
-              <UploadCloud size={15} color="#FFFFFF" />
+              <UploadCloud size={15} color="#FFFFFF" accessible={false} />
               <Text style={styles.uploadBtnText}>Upload File</Text>
             </TouchableOpacity>
           )}
         </View>
 
-        <Text style={[styles.headerTitle, { color: colors.text }]}>{subjectName}</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>{notes.length} document{notes.length !== 1 ? 's' : ''} • Hold to manage</Text>
+        <Animated.View sharedTransitionTag={`subject-card-${subjectId}`}>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{subjectName}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>{notes.length} document{notes.length !== 1 ? 's' : ''} • Hold to manage</Text>
+        </Animated.View>
 
         <FlatList
           data={notes}
@@ -254,7 +270,12 @@ export default function SubjectNotesScreen() {
         />
 
         {/* Note Options Modal */}
-        <Modal visible={isOptionsModalVisible} transparent animationType="fade">
+        <Modal
+          visible={isOptionsModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsOptionsModalVisible(false)}
+        >
           <TouchableOpacity style={styles.bottomSheetOverlay} activeOpacity={1} onPress={() => setIsOptionsModalVisible(false)}>
             <View style={[styles.bottomSheet, { backgroundColor: colors.card }]}>
               <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
@@ -299,47 +320,65 @@ export default function SubjectNotesScreen() {
         </Modal>
 
         {/* Move Modal */}
-        <Modal visible={isMoveModalVisible} transparent animationType="fade">
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Move Note</Text>
-              <Text style={[styles.modalSubHeader, { color: colors.subtext }]}>
-                Select a folder for "{movingNote?.name}"
-              </Text>
+        <Modal
+          visible={isMoveModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsMoveModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={styles.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setIsMoveModalVisible(false)}
+          >
+            <TouchableOpacity activeOpacity={1}>
+              <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>Move Note</Text>
+                <Text style={[styles.modalSubHeader, { color: colors.subtext }]}>
+                  Select a folder for "{movingNote?.name}"
+                </Text>
 
-              <ScrollView style={styles.moveSubjectList} showsVerticalScrollIndicator={false}>
-                {availableSubjects.map((subject) => (
+                <ScrollView style={styles.moveSubjectList} showsVerticalScrollIndicator={false}>
+                  {availableSubjects.map((subject) => (
+                    <TouchableOpacity
+                      key={subject.id}
+                      style={[styles.subjectItem, { borderBottomColor: colors.border }]}
+                      onPress={() => handleMoveNote(subject.id, subject.name)}
+                    >
+                      <Folder size={17} color={colors.subtext} accessible={false} />
+                      <Text style={[styles.subjectItemText, { color: colors.text }]}>{subject.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+
                   <TouchableOpacity
-                    key={subject.id}
                     style={[styles.subjectItem, { borderBottomColor: colors.border }]}
-                    onPress={() => handleMoveNote(subject.id, subject.name)}
+                    onPress={() => handleMoveNote(null, 'Uncategorized')}
                   >
-                    <Folder size={17} color={colors.subtext} />
-                    <Text style={[styles.subjectItemText, { color: colors.text }]}>{subject.name}</Text>
+                    <Archive size={17} color={colors.subtext} accessible={false} />
+                    <Text style={[styles.subjectItemText, { color: colors.subtext }]}>Uncategorized</Text>
                   </TouchableOpacity>
-                ))}
+                </ScrollView>
 
                 <TouchableOpacity
-                  style={[styles.subjectItem, { borderBottomColor: colors.border }]}
-                  onPress={() => handleMoveNote(null, 'Uncategorized')}
+                  onPress={() => setIsMoveModalVisible(false)}
+                  accessibilityLabel="Cancel"
+                  accessibilityRole="button"
+                  style={[styles.modalCancelBtn, { borderColor: colors.border }]}
                 >
-                  <Archive size={17} color={colors.subtext} />
-                  <Text style={[styles.subjectItemText, { color: colors.subtext }]}>Uncategorized</Text>
+                  <Text style={[styles.modalCancelBtnText, { color: colors.subtext }]}>Cancel</Text>
                 </TouchableOpacity>
-              </ScrollView>
-
-              <TouchableOpacity
-                onPress={() => setIsMoveModalVisible(false)}
-                style={[styles.modalCancelBtn, { borderColor: colors.border }]}
-              >
-                <Text style={[styles.modalCancelBtnText, { color: colors.subtext }]}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
         </Modal>
 
         {/* Rename Modal */}
-        <Modal visible={isRenameModalVisible} transparent animationType="fade">
+        <Modal
+          visible={isRenameModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsRenameModalVisible(false)}
+        >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
             style={styles.modalOverlay}
@@ -349,17 +388,25 @@ export default function SubjectNotesScreen() {
               <TextInput
                 value={newNoteName}
                 onChangeText={setNewNoteName}
+                accessibilityLabel="New note name"
                 style={[styles.input, { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }]}
                 autoFocus
               />
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   onPress={() => setIsRenameModalVisible(false)}
+                  accessibilityLabel="Cancel"
+                  accessibilityRole="button"
                   style={styles.cancelBtn}
                 >
                   <Text style={[styles.cancelBtnText, { color: colors.subtext }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleRenameNote} style={[styles.saveBtn, { backgroundColor: colors.accent }]}>
+                <TouchableOpacity
+                  onPress={handleRenameNote}
+                  accessibilityLabel="Save note name"
+                  accessibilityRole="button"
+                  style={[styles.saveBtn, { backgroundColor: colors.accent }]}
+                >
                   <Text style={styles.saveBtnText}>Save</Text>
                 </TouchableOpacity>
               </View>
@@ -373,7 +420,7 @@ export default function SubjectNotesScreen() {
 }
 
 const styles = StyleSheet.create({
-  iconButton: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  iconButton: { width: 44, height: 44, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
   uploadButton: {
     flexDirection: 'row',
     alignItems: 'center',

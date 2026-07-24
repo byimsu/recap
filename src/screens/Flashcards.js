@@ -85,10 +85,12 @@ export default function Flashcards() {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           handleDeleteDeck(item);
         }}
+        accessibilityLabel={item.title}
+        accessibilityRole="button"
         activeOpacity={0.7}
       >
-        <View style={[styles.deckIconBadge, { backgroundColor: colors.accentSoft }]}>
-          <Layers size={18} color={colors.accent} />
+        <View style={[styles.deckIconBadge, { backgroundColor: colors.accentSoft }]} accessible={false}>
+          <Layers size={18} color={colors.accent} accessible={false} />
         </View>
         <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={[styles.deckTitle, { color: colors.text }]} numberOfLines={1}>{item.title}</Text>
@@ -99,8 +101,10 @@ export default function Flashcards() {
           <TouchableOpacity
             style={[styles.addCardBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
             onPress={() => navigation.navigate("AddCard", { deckId: item.id })}
+            accessibilityLabel={`Add card to ${item.title}`}
+            accessibilityRole="button"
           >
-            <Plus size={16} color={colors.text} />
+            <Plus size={16} color={colors.text} accessible={false} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -110,6 +114,8 @@ export default function Flashcards() {
               isEmpty && { opacity: 0.5 }
             ]}
             disabled={isEmpty}
+            accessibilityLabel={`Study ${item.title}`}
+            accessibilityRole="button"
             onPress={() => {
               navigation.navigate("Review", { deckId: item.id, deckTitle: item.title });
             }}
@@ -130,16 +136,20 @@ export default function Flashcards() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
             style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}
           >
-            <ArrowLeft size={20} color={colors.text} />
+            <ArrowLeft size={20} color={colors.text} accessible={false} />
           </TouchableOpacity>
           {decks.length > 0 && (
             <TouchableOpacity
               onPress={() => setIsModalVisible(true)}
+              accessibilityLabel="Create new deck"
+              accessibilityRole="button"
               style={[styles.addBtn, { backgroundColor: colors.accent }]}
             >
-              <Plus size={16} color="#FFFFFF" />
+              <Plus size={16} color="#FFFFFF" accessible={false} />
               <Text style={styles.addBtnText}>New Deck</Text>
             </TouchableOpacity>
           )}
@@ -179,7 +189,12 @@ export default function Flashcards() {
         )}
 
         {/* Create Deck Modal */}
-        <Modal visible={isModalVisible} transparent animationType="fade">
+        <Modal
+          visible={isModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsModalVisible(false)}
+        >
           <View style={styles.modalOverlay}>
             <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>New Deck</Text>
@@ -209,7 +224,7 @@ export default function Flashcards() {
 }
 
 const styles = StyleSheet.create({
-  iconButton: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  iconButton: { width: 44, height: 44, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
   addBtn: { flexDirection: 'row', paddingHorizontal: 18, height: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   addBtnText: { fontWeight: '700', fontSize: 14, marginLeft: 8, color: '#FFFFFF' },
   headerTitle: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },

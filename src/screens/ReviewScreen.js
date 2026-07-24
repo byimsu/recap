@@ -160,6 +160,8 @@ export default function ReviewScreen() {
         <TouchableOpacity
           style={[styles.completionBtn, { backgroundColor: colors.accent }]}
           onPress={() => navigation.goBack()}
+          accessibilityLabel="Back to decks"
+          accessibilityRole="button"
         >
           <Text style={styles.completionBtnText}>Back to Decks</Text>
         </TouchableOpacity>
@@ -167,6 +169,8 @@ export default function ReviewScreen() {
         <TouchableOpacity
           style={[styles.completionBtn, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border, marginTop: 10 }]}
           onPress={handleStudyAll}
+          accessibilityLabel="Study all cards in cram mode"
+          accessibilityRole="button"
         >
           <Text style={[styles.completionBtnText, { color: colors.text }]}>Study All (Cram)</Text>
         </TouchableOpacity>
@@ -182,8 +186,13 @@ export default function ReviewScreen() {
 
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.closeBtn, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <X size={20} color={colors.text} />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Close"
+          accessibilityRole="button"
+          style={[styles.closeBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+        >
+          <X size={20} color={colors.text} accessible={false} />
         </TouchableOpacity>
 
         {/* Progress Bar */}

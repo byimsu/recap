@@ -19,13 +19,15 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createSubject, deleteSubject, loadSubjectsWithNoteCounts, renameSubject } from '../data/subjectsData';
+import AnimatedPressable from '../components/common/AnimatedPressable';
 
 const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) => (
-  <TouchableOpacity
+  <AnimatedPressable
+    type="card"
+    sharedTransitionTag={`subject-card-${item.id}`}
     style={[styles.subjectCard, { backgroundColor: colors.card, borderColor: colors.border }]}
     onPress={() => onPress(item)}
     onLongPress={() => onLongPress(item)}
-    activeOpacity={0.7}
   >
     <View style={[styles.subjectIcon, { backgroundColor: colors.accentSoft }]}>
       {item.isSystem ? (
@@ -41,7 +43,7 @@ const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) =>
       </Text>
     </View>
     <ChevronRight size={17} color={colors.subtext} />
-  </TouchableOpacity>
+  </AnimatedPressable>
 ));
 
 export default function NotesScreen() {
@@ -176,12 +178,22 @@ export default function NotesScreen() {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <ArrowLeft size={20} color={colors.text} />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+            style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+          >
+            <ArrowLeft size={20} color={colors.text} accessible={false} />
           </TouchableOpacity>
           {subjects.length > 0 && (
-            <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={[styles.addBtn, { backgroundColor: colors.accent }]}>
-              <FolderPlus size={16} color="#FFFFFF" />
+            <TouchableOpacity
+              onPress={() => setIsCreateModalVisible(true)}
+              accessibilityLabel="Create new folder"
+              accessibilityRole="button"
+              style={[styles.addBtn, { backgroundColor: colors.accent }]}
+            >
+              <FolderPlus size={16} color="#FFFFFF" accessible={false} />
               <Text style={styles.addBtnText}>New Folder</Text>
             </TouchableOpacity>
           )}
@@ -204,7 +216,7 @@ export default function NotesScreen() {
             getItemLayout={(data, index) => (
               { length: 84, offset: 84 * index, index }
             )}
-            contentContainerStyle={{ paddingBottom: 40 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
             ListEmptyComponent={
               <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <FolderOpen size={30} color={colors.border} />
@@ -214,6 +226,8 @@ export default function NotesScreen() {
                 </Text>
                 <TouchableOpacity
                   onPress={() => setIsCreateModalVisible(true)}
+                  accessibilityLabel="Create new folder"
+                  accessibilityRole="button"
                   style={[styles.emptyCta, { backgroundColor: colors.accent }]}
                 >
                   <Text style={styles.emptyCtaText}>New Folder</Text>
@@ -225,7 +239,12 @@ export default function NotesScreen() {
       </View>
 
       {/* Create Subject Modal */}
-      <Modal visible={isCreateModalVisible} transparent animationType="fade">
+      <Modal
+        visible={isCreateModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsCreateModalVisible(false)}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
@@ -254,7 +273,12 @@ export default function NotesScreen() {
       </Modal>
 
       {/* Rename Subject Modal */}
-      <Modal visible={isRenameModalVisible} transparent animationType="fade">
+      <Modal
+        visible={isRenameModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => { setIsRenameModalVisible(false); setSubjectInputName(''); }}
+      >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
@@ -286,7 +310,12 @@ export default function NotesScreen() {
       </Modal>
 
       {/* Options Menu (Long Press) */}
-      <Modal visible={isOptionsModalVisible} transparent animationType="fade">
+      <Modal
+        visible={isOptionsModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsOptionsModalVisible(false)}
+      >
         <TouchableOpacity style={styles.bottomSheetOverlay} activeOpacity={1} onPress={() => setIsOptionsModalVisible(false)}>
           <View style={[styles.bottomSheet, { backgroundColor: colors.card }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />

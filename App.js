@@ -41,7 +41,11 @@ function RootNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator
-        screenOptions={{ headerShown: false }}
+        screenOptions={{
+          headerShown: false,
+          animation: 'fade_from_bottom',
+          animationDuration: 240,
+        }}
         initialRouteName={user ? "MainApp" : "Login"}
       >
         {user ? (

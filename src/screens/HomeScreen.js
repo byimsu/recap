@@ -39,6 +39,8 @@ import { getLocalStudyData, formatLocalDate } from '../storage/studyStorage';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import StaggerView from '../components/common/StaggeredView';
+import AnimatedPressable from '../components/common/AnimatedPressable';
 
 function getGreetingText() {
   const hour = new Date().getHours();
@@ -57,10 +59,11 @@ const RecentNoteItem = React.memo(({ note, subjectDisplay, colors, onPress }) =>
   }, [note.uri, onPress]);
 
   return (
-    <TouchableOpacity
+    <AnimatedPressable
+      type="row"
+      sharedTransitionTag={`note-card-${note.id}`}
       style={[styles.recentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
       onPress={handlePress}
-      activeOpacity={0.7}
     >
       <View style={[styles.recentIconBadge, { backgroundColor: colors.bg, borderColor: colors.border, borderWidth: 1 }]}>
         <FileText size={17} color={colors.subtext} />
@@ -76,7 +79,7 @@ const RecentNoteItem = React.memo(({ note, subjectDisplay, colors, onPress }) =>
       </View>
 
       <ArrowRight size={14} color={colors.subtext} />
-    </TouchableOpacity>
+    </AnimatedPressable>
   );
 });
 
@@ -212,7 +215,7 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Top Header Area */}
-        <View style={styles.headerArea}>
+        <StaggerView delay={0} distance={8} style={styles.headerArea}>
           <View style={styles.topBar}>
             <View style={styles.greetingHeaderContainer}>
               <Text style={[styles.greetingLine1, { color: colors.text }]}>{greeting.line1}</Text>
@@ -221,37 +224,43 @@ export default function HomeScreen() {
             </View>
 
             <View style={styles.headerActionsRow}>
-              <TouchableOpacity
+              <AnimatedPressable
+                type="button"
                 onPress={() => navigation.navigate("StudySchedule")}
+                accessibilityLabel="Reminders"
+                accessibilityRole="button"
                 style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                activeOpacity={0.75}
               >
-                <Bell size={16} color={colors.text} />
-              </TouchableOpacity>
+                <Bell size={16} color={colors.text} accessible={false} />
+              </AnimatedPressable>
 
-              <TouchableOpacity
+              <AnimatedPressable
+                type="button"
                 onPress={() => navigation.navigate("Deadlines")}
+                accessibilityLabel="Deadlines"
+                accessibilityRole="button"
                 style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                activeOpacity={0.75}
               >
-                <Calendar size={16} color={colors.text} />
-              </TouchableOpacity>
+                <Calendar size={16} color={colors.text} accessible={false} />
+              </AnimatedPressable>
 
-              <TouchableOpacity
+              <AnimatedPressable
+                type="button"
                 onPress={() => setIsMenuVisible(true)}
+                accessibilityLabel="More options"
+                accessibilityRole="button"
                 style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-                activeOpacity={0.75}
               >
-                <MoreVertical size={16} color={colors.text} />
-              </TouchableOpacity>
+                <MoreVertical size={16} color={colors.text} accessible={false} />
+              </AnimatedPressable>
             </View>
           </View>
-        </View>
+        </StaggerView>
 
         {/* Layered Card Sheet Container */}
         <View style={[styles.layeredSheet, { backgroundColor: colors.card }]}>
           {/* Dashboard Main Overview Section */}
-          <View style={styles.dashboardSection}>
+          <StaggerView delay={80} distance={10} style={styles.dashboardSection}>
             <View style={styles.dashboardHeaderRow}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.dashboardTitle, { color: colors.text }]}>Study Overview</Text>
@@ -260,22 +269,24 @@ export default function HomeScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity
+              <AnimatedPressable
+                type="import"
                 onPress={handleUpload}
+                accessibilityLabel="Import note"
+                accessibilityRole="button"
                 style={[styles.importBtn, { backgroundColor: colors.accent }]}
-                activeOpacity={0.85}
               >
-                <UploadCloud size={12} color="#FFFFFF" />
+                <UploadCloud size={12} color="#FFFFFF" accessible={false} />
                 <Text style={styles.importBtnText}>Import Note</Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
 
             {/* Standalone Statistic Cards Grid */}
             <View style={styles.metricCardsGrid}>
-              <TouchableOpacity
+              <AnimatedPressable
+                type="card"
                 style={[styles.metricCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => navigation.navigate("ProgressTab")}
-                activeOpacity={0.8}
               >
                 <View style={styles.metricCardTop}>
                   <Text style={[styles.metricLabel, { color: colors.subtext }]} numberOfLines={2}>
@@ -288,12 +299,12 @@ export default function HomeScreen() {
                 <Text style={[styles.metricValue, { color: colors.text }]}>
                   {todayMinutes > 0 ? `${todayMinutes}m` : '0m'}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
 
-              <TouchableOpacity
+              <AnimatedPressable
+                type="card"
                 style={[styles.metricCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
                 onPress={() => navigation.navigate("Deadlines")}
-                activeOpacity={0.8}
               >
                 <View style={styles.metricCardTop}>
                   <Text style={[styles.metricLabel, { color: colors.subtext }]} numberOfLines={2}>
@@ -306,71 +317,73 @@ export default function HomeScreen() {
                 <Text style={[styles.metricValue, { color: colors.text }]}>
                   {upcoming.length > 0 ? `${upcoming.length} Due` : '0 Due'}
                 </Text>
-              </TouchableOpacity>
+              </AnimatedPressable>
             </View>
-          </View>
+          </StaggerView>
 
           {/* Quick Access Action Chips */}
-          <View style={styles.chipsRow}>
-            <TouchableOpacity
+          <StaggerView delay={140} distance={10} style={styles.chipsRow}>
+            <AnimatedPressable
+              type="card"
               style={[styles.actionChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => navigation.navigate("Notes")}
-              activeOpacity={0.75}
             >
               <View style={[styles.chipIconBadge, { backgroundColor: colors.card }]}>
                 <BookOpen size={16} color={colors.text} />
               </View>
               <Text style={[styles.chipTitle, { color: colors.text }]}>Notes</Text>
-            </TouchableOpacity>
+            </AnimatedPressable>
 
-            <TouchableOpacity
+            <AnimatedPressable
+              type="card"
               style={[styles.actionChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
               onPress={() => navigation.navigate("Flashcards")}
-              activeOpacity={0.75}
             >
               <View style={[styles.chipIconBadge, { backgroundColor: colors.card }]}>
                 <Library size={16} color={colors.text} />
               </View>
               <Text style={[styles.chipTitle, { color: colors.text }]}>Flashcards</Text>
-            </TouchableOpacity>
-          </View>
+            </AnimatedPressable>
+          </StaggerView>
 
           {/* Recent Notes Section */}
-          <View style={styles.recentSectionHeader}>
-            <Text style={[styles.sectionHeading, { color: colors.text }]}>Recent Notes</Text>
-            {recentNotes.length > 0 && (
-              <TouchableOpacity onPress={() => navigation.navigate("Notes")}>
-                <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {recentNotes.length === 0 ? (
-            <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
-              <FileText size={26} color={colors.subtext} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>No notes yet</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
-                Import your first study material to start building your library.
-              </Text>
+          <StaggerView delay={200} distance={10}>
+            <View style={styles.recentSectionHeader}>
+              <Text style={[styles.sectionHeading, { color: colors.text }]}>Recent Notes</Text>
+              {recentNotes.length > 0 && (
+                <TouchableOpacity onPress={() => navigation.navigate("Notes")}>
+                  <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
+                </TouchableOpacity>
+              )}
             </View>
-          ) : (
-            (() => {
-              const subjectMap = {};
-              subjects.forEach(s => { subjectMap[s.id] = s.name; });
-              return recentNotes.map((note) => {
-                const subjectDisplay = subjectMap[note.subjectId] || "Uncategorized";
-                return (
-                  <RecentNoteItem
-                    key={note.id}
-                    note={note}
-                    subjectDisplay={subjectDisplay}
-                    colors={colors}
-                    onPress={handleOpenNote}
-                  />
-                );
-              });
-            })()
-          )}
+
+            {recentNotes.length === 0 ? (
+              <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+                <FileText size={26} color={colors.subtext} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>No notes yet</Text>
+                <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                  Import your first study material to start building your library.
+                </Text>
+              </View>
+            ) : (
+              (() => {
+                const subjectMap = {};
+                subjects.forEach(s => { subjectMap[s.id] = s.name; });
+                return recentNotes.map((note) => {
+                  const subjectDisplay = subjectMap[note.subjectId] || "Uncategorized";
+                  return (
+                    <RecentNoteItem
+                      key={note.id}
+                      note={note}
+                      subjectDisplay={subjectDisplay}
+                      colors={colors}
+                      onPress={handleOpenNote}
+                    />
+                  );
+                });
+              })()
+            )}
+          </StaggerView>
         </View>
       </ScrollView>
 
@@ -633,11 +646,12 @@ const styles = StyleSheet.create({
   },
   metricCard: {
     flex: 1,
-    borderRadius: 16,
+    borderRadius: 14,
     borderWidth: 1,
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     justifyContent: "space-between",
-    minHeight: 104,
+    minHeight: 80,
   },
   metricCardTop: {
     flexDirection: "row",

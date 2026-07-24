@@ -8,12 +8,14 @@ export const useTheme = () => useContext(ThemeContext);
 
 const THEME_KEY = '@app_theme_preference';
 const AMOLED_KEY = '@app_amoled_preference';
+const HAPTICS_KEY = '@app_haptics_preference';
 const ACCENT = '#F97316';
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
   const [userTheme, setUserTheme] = useState(null); // null means 'system'
   const [isAmoled, setIsAmoled] = useState(false);
+  const [isHapticsEnabled, setIsHapticsEnabled] = useState(true);
   const [isLoaded, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -21,10 +23,12 @@ export const ThemeProvider = ({ children }) => {
       try {
         const savedTheme = await AsyncStorage.getItem(THEME_KEY);
         const savedAmoled = await AsyncStorage.getItem(AMOLED_KEY);
+        const savedHaptics = await AsyncStorage.getItem(HAPTICS_KEY);
         if (savedTheme) {
           setUserTheme(savedTheme === 'system' ? null : savedTheme);
         }
         if (savedAmoled) setIsAmoled(savedAmoled === 'true');
+        if (savedHaptics !== null) setIsHapticsEnabled(savedHaptics === 'true');
       } catch (e) {
         console.error("Error loading theme prefs:", e);
       } finally {
@@ -61,6 +65,14 @@ export const ThemeProvider = ({ children }) => {
       const nextAmoled = !prev;
       AsyncStorage.setItem(AMOLED_KEY, nextAmoled.toString());
       return nextAmoled;
+    });
+  }, []);
+
+  const toggleHaptics = useCallback(async () => {
+    setIsHapticsEnabled((prev) => {
+      const nextHaptics = !prev;
+      AsyncStorage.setItem(HAPTICS_KEY, nextHaptics.toString());
+      return nextHaptics;
     });
   }, []);
 
@@ -101,12 +113,14 @@ export const ThemeProvider = ({ children }) => {
   const contextValue = useMemo(() => ({
     theme,
     isAmoled,
+    isHapticsEnabled,
     toggleTheme,
     setSystemTheme,
     userTheme,
     toggleAmoled,
+    toggleHaptics,
     colors,
-  }), [theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors]);
+  }), [theme, isAmoled, isHapticsEnabled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, toggleHaptics, colors]);
 
   return (
     <ThemeContext.Provider value={contextValue}>

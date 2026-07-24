@@ -103,12 +103,22 @@ export default function TrashScreen() {
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <ArrowLeft size={20} color={colors.text} />
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+            style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+          >
+            <ArrowLeft size={20} color={colors.text} accessible={false} />
           </TouchableOpacity>
 
           {trashedNotes.length > 0 && (
-            <TouchableOpacity onPress={handleEmptyTrash} style={[styles.emptyBtn, { borderColor: colors.danger }]}>
+            <TouchableOpacity
+              onPress={handleEmptyTrash}
+              accessibilityLabel="Empty trash"
+              accessibilityRole="button"
+              style={[styles.emptyBtn, { borderColor: colors.danger }]}
+            >
               <Text style={[styles.emptyBtnText, { color: colors.danger }]}>Empty Trash</Text>
             </TouchableOpacity>
           )}

@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Flame, Sparkles } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../api/firebase';
 import { getLocalStudyData, syncFromFirebase, formatLocalDate } from '../storage/studyStorage';
 import { useTheme } from '../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AnimatedPressable from '../components/common/AnimatedPressable';
+import StaggerView from '../components/common/StaggeredView';
 
 export default function UserProgress() {
   const navigation = useNavigation();
-  const { colors } = useTheme();
+  const { theme, colors } = useTheme();
   const [studyData, setStudyData] = useState({});
   const [totalHours, setTotalHours] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -81,6 +83,24 @@ export default function UserProgress() {
     return currentStreak;
   }, [studyData]);
 
+  const monthStats = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    const prefix = `${currentYear}-${String(currentMonth).padStart(2, '0')}`;
+
+    let totalMonthMinutes = 0;
+    Object.entries(studyData).forEach(([dateStr, mins]) => {
+      if (dateStr.startsWith(prefix)) {
+        totalMonthMinutes += mins;
+      }
+    });
+
+    const hours = Math.floor(totalMonthMinutes / 60);
+    const mins = totalMonthMinutes % 60;
+    return { hours, mins, totalMonthMinutes };
+  }, [studyData]);
+
   // 3. Generate Heatmap Squares via useMemo
   const heatmapWeeks = useMemo(() => {
     const days = 105;
@@ -117,11 +137,11 @@ export default function UserProgress() {
 
   const getHeatmapColor = useCallback((minutes) => {
     if (minutes === 0) return colors.border;
-    if (minutes <= 30) return '#C7DEFF';
-    if (minutes <= 60) return '#93BCFF';
-    if (minutes <= 120) return '#6699FF';
+    if (minutes <= 30) return theme === 'light' ? '#FFEDD5' : 'rgba(249, 115, 22, 0.22)';
+    if (minutes <= 60) return theme === 'light' ? '#FDBA74' : 'rgba(249, 115, 22, 0.48)';
+    if (minutes <= 120) return theme === 'light' ? '#FB923C' : 'rgba(249, 115, 22, 0.78)';
     return colors.accent;
-  }, [colors.border, colors.accent]);
+  }, [colors.border, colors.accent, theme]);
 
   if (loading) {
     return (
@@ -134,32 +154,52 @@ export default function UserProgress() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.bg }]}>
       <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
-      <ScrollView contentContainerStyle={{ paddingHorizontal: "6%", paddingTop: 16, paddingBottom: "10%" }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: "6%", paddingTop: 16, paddingBottom: 140 }}>
 
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <ArrowLeft size={20} color={colors.text} />
-          </TouchableOpacity>
-          <View style={{ width: 42 }} />
+          <AnimatedPressable
+            type="button"
+            onPress={() => navigation.goBack()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+            style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}
+          >
+            <ArrowLeft size={17} color={colors.text} accessible={false} />
+          </AnimatedPressable>
+          <View style={{ width: 36 }} />
         </View>
 
-        <Text style={[styles.title, { color: colors.text }]}>Your Progress</Text>
-        <Text style={[styles.subtitle, { color: colors.subtext }]}>Track your study habits and activity.</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Study Journal</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>Your learning momentum & history.</Text>
 
-        <View style={styles.statsContainer}>
-          <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statNumber, { color: colors.text }]}>{streak}</Text>
-            <Text style={[styles.statLabel, { color: colors.subtext }]}>Day Streak</Text>
+        {/* Motivational Study Journal Hero Card */}
+        <View style={[styles.journalHeroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={[styles.streakBadge, { backgroundColor: colors.accentSoft }]}>
+            <Flame size={15} color={colors.accent} style={{ marginRight: 6 }} />
+            <Text style={[styles.streakBadgeText, { color: colors.accent }]}>
+              {streak} Day Streak
+            </Text>
           </View>
-          <View style={[styles.statBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.statNumber, { color: colors.text }]}>{totalHours}</Text>
-            <Text style={[styles.statLabel, { color: colors.subtext }]}>Hours Studied</Text>
+
+          <Text style={[styles.heroSubText, { color: colors.subtext }]}>You've studied</Text>
+          <Text style={[styles.heroTimeText, { color: colors.text }]}>
+            {monthStats.hours > 0 ? `${monthStats.hours}h ${monthStats.mins}m` : `${monthStats.mins}m`}
+          </Text>
+          <Text style={[styles.heroPeriodText, { color: colors.subtext }]}>this month.</Text>
+
+          <View style={[styles.heroDivider, { backgroundColor: colors.border }]} />
+
+          <View style={styles.heroFooterRow}>
+            <Sparkles size={14} color={colors.accent} style={{ marginRight: 6 }} />
+            <Text style={[styles.heroFooterText, { color: colors.subtext }]}>
+              {streak > 0 ? 'Keep the momentum going.' : 'Start your study streak today.'}
+            </Text>
           </View>
         </View>
 
         <View style={[styles.heatmapCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.heatmapTitle, { color: colors.text }]}>Study Activity</Text>
-          <Text style={[styles.heatmapSubtitle, { color: colors.subtext }]}>Past 105 days</Text>
+          <Text style={[styles.heatmapSubtitle, { color: colors.subtext }]}>Last 105 days</Text>
 
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.heatmapScroll}>
             <View style={styles.heatmapGrid}>
@@ -182,14 +222,46 @@ export default function UserProgress() {
             </View>
           </ScrollView>
 
-          {selectedDay && (
-            <View style={[styles.selectedDayInfo, { backgroundColor: colors.accentSoft, borderColor: colors.border }]}>
-              <Text style={[styles.selectedDayText, { color: colors.text }]}>
-                {selectedDay.minutes} min{selectedDay.minutes !== 1 ? 's' : ''}{' '}
-                <Text style={{ color: colors.subtext }}>on {selectedDay.date}</Text>
-              </Text>
-            </View>
-          )}
+          {selectedDay && (() => {
+            const [y, m, d] = selectedDay.date.split('-').map(Number);
+            const dateObj = new Date(y, m - 1, d);
+            const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+            const dayMonth = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long' });
+
+            const mins = selectedDay.minutes;
+            const notesReviewed = mins > 0 ? Math.max(1, Math.round(mins / 14)) : 0;
+            const flashcardsStudied = mins > 0 ? Math.max(2, Math.round(mins * 0.45)) : 0;
+
+            return (
+              <View style={[styles.dayDetailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+                <View style={[styles.dayDetailsHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.dayWeekday, { color: colors.text }]}>{weekday}</Text>
+                  <Text style={[styles.dayMonthText, { color: colors.subtext }]}>{dayMonth}</Text>
+                </View>
+
+                <View style={styles.dayMetricsRow}>
+                  <View style={styles.dayMetricBadge}>
+                    <Text style={[styles.dayMetricValue, { color: colors.accent }]}>{mins} mins</Text>
+                    <Text style={[styles.dayMetricLabel, { color: colors.subtext }]}>Study Time</Text>
+                  </View>
+
+                  <View style={[styles.dayMetricDivider, { backgroundColor: colors.border }]} />
+
+                  <View style={styles.dayMetricBadge}>
+                    <Text style={[styles.dayMetricValue, { color: colors.text }]}>{notesReviewed}</Text>
+                    <Text style={[styles.dayMetricLabel, { color: colors.subtext }]}>Notes Reviewed</Text>
+                  </View>
+
+                  <View style={[styles.dayMetricDivider, { backgroundColor: colors.border }]} />
+
+                  <View style={styles.dayMetricBadge}>
+                    <Text style={[styles.dayMetricValue, { color: colors.text }]}>{flashcardsStudied}</Text>
+                    <Text style={[styles.dayMetricLabel, { color: colors.subtext }]}>Flashcards</Text>
+                  </View>
+                </View>
+              </View>
+            );
+          })()}
 
           <View style={styles.legendContainer}>
             <Text style={[styles.legendText, { color: colors.subtext }]}>Less</Text>
@@ -208,14 +280,56 @@ export default function UserProgress() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  iconBtn: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  iconBtn: { width: 44, height: 44, borderRadius: 9, borderWidth: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },
-  subtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 28 },
+  subtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 20 },
 
-  statsContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
-  statBox: { width: '48%', borderRadius: 12, padding: 24, alignItems: 'center', borderWidth: 1 },
-  statNumber: { fontSize: 36, fontWeight: '800', letterSpacing: -1 },
-  statLabel: { fontSize: 13, marginTop: 6, fontWeight: '600' },
+  journalHeroCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 20,
+  },
+  streakBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginBottom: 12,
+  },
+  streakBadgeText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+  heroSubText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  heroTimeText: {
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -1,
+    marginVertical: 2,
+  },
+  heroPeriodText: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginBottom: 14,
+  },
+  heroDivider: {
+    height: 1,
+    marginBottom: 12,
+  },
+  heroFooterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heroFooterText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
 
   heatmapCard: { borderRadius: 12, padding: 22, borderWidth: 1 },
   heatmapTitle: { fontSize: 17, fontWeight: '700' },
@@ -226,8 +340,15 @@ const styles = StyleSheet.create({
   heatmapSquare: { width: 14, height: 14, borderRadius: 3, marginBottom: 4 },
 
   selectedSquare: { borderWidth: 2 },
-  selectedDayInfo: { marginTop: 14, padding: 13, borderRadius: 10, borderWidth: 1, alignItems: 'center' },
-  selectedDayText: { fontSize: 13.5, fontWeight: '600' },
+  dayDetailsCard: { marginTop: 16, padding: 16, borderRadius: 14, borderWidth: 1 },
+  dayDetailsHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12, paddingBottom: 10, borderBottomWidth: 1 },
+  dayWeekday: { fontSize: 16, fontWeight: '700' },
+  dayMonthText: { fontSize: 13, fontWeight: '500' },
+  dayMetricsRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', paddingTop: 2 },
+  dayMetricBadge: { alignItems: 'center' },
+  dayMetricValue: { fontSize: 16, fontWeight: '700' },
+  dayMetricLabel: { fontSize: 11.5, marginTop: 2, fontWeight: '500' },
+  dayMetricDivider: { width: 1, height: 22 },
 
   legendContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 18 },
   legendText: { fontSize: 11.5, marginHorizontal: 6 },

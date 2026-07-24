@@ -12,7 +12,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { ArrowLeft, Camera, Cloud, ChevronRight, Mail, CheckCircle2, AlertCircle, Info, Shield, FileText, LogOut, Trash2, AlertTriangle } from 'lucide-react-native';
+import { ArrowLeft, Camera, Cloud, ChevronRight, Mail, CheckCircle2, AlertCircle, Info, Shield, FileText, LogOut, Trash2, AlertTriangle, Circle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
@@ -46,14 +46,16 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
     <Wrapper
       onPress={onPress}
       disabled={disabled}
-      activeOpacity={0.7}
+      activeOpacity={0.75}
+      accessibilityLabel={label}
+      accessibilityRole={onPress ? 'button' : undefined}
       style={[
         styles.row,
         { backgroundColor: colors.card, borderColor: colors.border },
         disabled && { opacity: 0.6 },
       ]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: colors.accentSoft }]}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.accentSoft }]} accessible={false}>
         {icon}
       </View>
       <View style={styles.rowContent}>
@@ -232,9 +234,11 @@ export default function ProfileScreen() {
         {/* Header */}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
           style={[styles.backButton, { borderColor: colors.border }]}
         >
-          <ArrowLeft size={20} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} accessible={false} />
         </TouchableOpacity>
 
         <Text style={[styles.screenTitle, { color: colors.text }]}>Profile</Text>
@@ -245,6 +249,8 @@ export default function ProfileScreen() {
             onPress={handleChangePhoto}
             disabled={uploading || saving}
             activeOpacity={0.8}
+            accessibilityLabel="Change profile photo"
+            accessibilityRole="button"
           >
             <View style={styles.avatarOuter}>
               {profile?.photoURL ? (
@@ -252,22 +258,23 @@ export default function ProfileScreen() {
                   source={{ uri: profile.photoURL }}
                   style={styles.avatarImage}
                   resizeMode="cover"
+                  accessible={false}
                 />
               ) : (
-                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]}>
-                  <Text style={[styles.avatarInitials, { color: colors.buttonText }]}>
+                <View style={[styles.avatarPlaceholder, { backgroundColor: colors.primary }]} accessible={false}>
+                  <Text style={[styles.avatarInitials, { color: colors.buttonText }]} accessible={false}>
                     {getInitials(profile?.displayName)}
                   </Text>
                 </View>
               )}
 
               {uploading ? (
-                <View style={styles.avatarOverlay}>
+                <View style={styles.avatarOverlay} accessible={false}>
                   <Text style={styles.uploadProgressText}>{uploadProgress}%</Text>
                 </View>
               ) : (
-                <View style={[styles.cameraButton, { backgroundColor: colors.button }]}>
-                  <Camera size={12} color={colors.buttonText} />
+                <View style={[styles.cameraButton, { backgroundColor: colors.button }]} accessible={false}>
+                  <Camera size={12} color={colors.buttonText} accessible={false} />
                 </View>
               )}
             </View>
@@ -276,11 +283,16 @@ export default function ProfileScreen() {
           <Text style={[styles.profileName, { color: colors.text }]}>
             {profile?.displayName || 'Guest'}
           </Text>
-          <View style={[styles.badge, { borderColor: colors.border, backgroundColor: colors.card }]}>
-            <Text style={[styles.badgeText, { color: colors.subtext }]}>
-              {isGuest ? 'Guest Account' : 'Registered Account'}
-            </Text>
-          </View>
+          {isGuest ? (
+            <View style={[styles.guestChip, { backgroundColor: colors.accentSoft }]} accessible={false}>
+              <Circle size={8} fill={colors.accent} color={colors.accent} />
+              <Text style={[styles.guestChipText, { color: colors.accent, marginLeft: 6 }]}>Guest</Text>
+            </View>
+          ) : (
+            <View style={[styles.badge, { borderColor: colors.border, backgroundColor: colors.card }]} accessible={false}>
+              <Text style={[styles.badgeText, { color: colors.subtext }]}>Registered Account</Text>
+            </View>
+          )}
         </View>
 
         {/* Guest CTA */}
@@ -310,6 +322,8 @@ export default function ProfileScreen() {
             placeholderTextColor={colors.subtext}
             maxLength={NAME_MAX}
             editable={!saving && !uploading}
+            autoCapitalize="words"
+            accessibilityLabel="Display name"
             style={[styles.input, { color: colors.text, borderColor: colors.border }]}
           />
           <Text style={[styles.charCount, { color: colors.subtext }]}>
@@ -319,6 +333,8 @@ export default function ProfileScreen() {
           <TouchableOpacity
             onPress={handleChangeName}
             disabled={!canSave}
+            accessibilityLabel="Save changes"
+            accessibilityRole="button"
             style={[
               styles.saveButton,
               { backgroundColor: colors.button },
@@ -346,7 +362,7 @@ export default function ProfileScreen() {
             <Row
               colors={colors}
               icon={
-                  emailVerified ? <CheckCircle2 size={16} color={colors.success} /> : <AlertCircle size={16} color={colors.danger} />
+                emailVerified ? <CheckCircle2 size={16} color={colors.success} /> : <AlertCircle size={16} color={colors.danger} />
               }
               label={emailVerified ? 'Email Verified' : 'Email Not Verified'}
               sublabel={emailVerified ? null : 'Check your inbox for a verification link'}
@@ -507,7 +523,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: '6%',
     paddingTop: 16,
-    paddingBottom: '6%',
+    paddingBottom: 100,
   },
   centered: {
     flex: 1,
@@ -515,8 +531,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 10,
     borderWidth: 1,
     justifyContent: 'center',
@@ -589,6 +605,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
+  },
+  guestChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
   },
   badgeText: {
     fontSize: 12,

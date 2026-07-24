@@ -79,9 +79,11 @@ export default function RegisterScreen({ navigation }) {
         >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
           style={{
-            width: 42,
-            height: 42,
+            width: 44,
+            height: 44,
             borderRadius: 12,
             borderWidth: 1,
             borderColor: colors.border,
@@ -89,7 +91,7 @@ export default function RegisterScreen({ navigation }) {
             alignItems: "center",
           }}
         >
-          <ArrowLeft size={20} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} accessible={false} />
         </TouchableOpacity>
 
         <Text
@@ -171,12 +173,14 @@ export default function RegisterScreen({ navigation }) {
             />
             <TouchableOpacity
               onPress={() => setShowPassword((v) => !v)}
+              accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+              accessibilityRole="button"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               {showPassword ? (
-                <EyeOff size={17} color={colors.subtext} />
+                <EyeOff size={17} color={colors.subtext} accessible={false} />
               ) : (
-                <Eye size={17} color={colors.subtext} />
+                <Eye size={17} color={colors.subtext} accessible={false} />
               )}
             </TouchableOpacity>
           </View>

@@ -108,14 +108,21 @@ export default function DeckDetailScreen() {
   return (
     <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.bg }]}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}>
-          <ArrowLeft size={20} color={colors.text} />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}
+        >
+          <ArrowLeft size={20} color={colors.text} accessible={false} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => navigation.navigate("AddCard", { deckId })}
+          accessibilityLabel="Add card"
+          accessibilityRole="button"
           style={[styles.addBtn, { backgroundColor: colors.accent }]}
         >
-          <Plus size={16} color="#FFFFFF" />
+          <Plus size={16} color="#FFFFFF" accessible={false} />
           <Text style={styles.addBtnText}>Add Card</Text>
         </TouchableOpacity>
       </View>
