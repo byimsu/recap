@@ -1,6 +1,7 @@
 import React from 'react';
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { ActivityIndicator, View } from 'react-native';
@@ -13,7 +14,7 @@ import RegisterScreen from "./src/screens/RegisterScreen";
 import UserProgress from "./src/screens/UserProgress";
 import Notes from "./src/screens/Notes";
 import Flashcards from "./src/screens/Flashcards";
-import DrawerNavigator from "./src/navigation/DrawerNavigator";
+import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import ReviewScreen from "./src/screens/ReviewScreen";
 import AddCardScreen from "./src/screens/AddCardScreen";
 import SubjectNotesScreen from "./src/screens/SubjectNotesScreen";
@@ -31,8 +32,8 @@ function RootNavigator() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
-        <ActivityIndicator size="large" color="#0a0a0a" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAFA' }}>
+        <ActivityIndicator size="large" color="#F17632" />
       </View>
     );
   }
@@ -45,7 +46,7 @@ function RootNavigator() {
       >
         {user ? (
           <>
-            <Stack.Screen name="MainApp" component={DrawerNavigator} />
+            <Stack.Screen name="MainApp" component={BottomTabNavigator} />
             <Stack.Screen name="UserProgress" component={UserProgress} />
             <Stack.Screen name="Notes" component={Notes} />
             <Stack.Screen name="SubjectNotes" component={SubjectNotesScreen} />
@@ -74,12 +75,14 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <ThemeProvider>
-          <RootNavigator />
-        </ThemeProvider>
-      </AuthProvider>
-    </GestureHandlerRootView>
+    <SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <AuthProvider>
+          <ThemeProvider>
+            <RootNavigator />
+          </ThemeProvider>
+        </AuthProvider>
+      </GestureHandlerRootView>
+    </SafeAreaProvider>
   );
 }

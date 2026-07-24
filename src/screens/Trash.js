@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { ArrowLeft, Trash2, RefreshCcw } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import {
   loadAndCleanTrash as dataLoadAndCleanTrash,
@@ -17,6 +17,7 @@ import {
   emptyTrash as dataEmptyTrash
 } from '../data/notesData';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TrashScreen() {
   const navigation = useNavigation();
@@ -96,32 +97,35 @@ export default function TrashScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.bg }]}>
+      <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border }]}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <ArrowLeft size={20} color={colors.text} />
           </TouchableOpacity>
 
           {trashedNotes.length > 0 && (
-            <TouchableOpacity onPress={handleEmptyTrash} style={styles.emptyBtn}>
-              <Text style={styles.emptyBtnText}>Empty</Text>
+            <TouchableOpacity onPress={handleEmptyTrash} style={[styles.emptyBtn, { borderColor: colors.danger }]}>
+              <Text style={[styles.emptyBtnText, { color: colors.danger }]}>Empty Trash</Text>
             </TouchableOpacity>
           )}
         </View>
 
         <Text style={[styles.mainTitle, { color: colors.text }]}>Trash</Text>
-        <Text style={[styles.subtitle, { color: colors.subtext }]}>Items are permanently deleted after 30 days.</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>Deleted items are permanently removed after 30 days.</Text>
 
         {/* Trashed Items List */}
         <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
           {trashedNotes.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Feather name="trash" size={48} color={colors.border} style={{ marginBottom: 16 }} />
-              <Text style={[styles.emptyText, { color: colors.subtext }]}>Your trash is empty.</Text>
+            <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Trash2 size={30} color={colors.border} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing in the trash</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                Deleted items will appear here for 30 days before being permanently removed.
+              </Text>
             </View>
           ) : (
             trashedNotes.map((note) => {
@@ -132,24 +136,24 @@ export default function TrashScreen() {
                 <View key={note.id} style={[styles.trashCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.cardInfo}>
                     <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>{note.name}</Text>
-                    <Text style={styles.cardSubtitle}>
+                    <Text style={{ color: colors.danger, fontSize: 12, marginTop: 3, fontWeight: '500' }}>
                       {daysLeft} day{daysLeft !== 1 ? 's' : ''} left
                     </Text>
                   </View>
 
                   <View style={styles.actionsContainer}>
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}
+                      style={[styles.actionBtn, { backgroundColor: 'rgba(18,121,79,0.08)' }]}
                       onPress={() => handleRestore(note)}
                     >
-                      <Feather name="refresh-ccw" size={18} color={colors.success} />
+                      <RefreshCcw size={16} color={colors.success} />
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                      style={[styles.actionBtn, { backgroundColor: 'rgba(255, 59, 48, 0.1)' }]}
+                      style={[styles.actionBtn, { backgroundColor: 'rgba(217,45,32,0.08)' }]}
                       onPress={() => handlePermanentDelete(note.id, note.uri)}
                     >
-                      <Feather name="trash-2" size={18} color={colors.danger} />
+                      <Trash2 size={16} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -159,32 +163,39 @@ export default function TrashScreen() {
           <View style={{ height: 40 }} />
         </ScrollView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: "6%", paddingTop: "16%" },
+  content: { flex: 1, paddingHorizontal: "6%", paddingTop: 16 },
 
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  iconBtn: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  iconBtn: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
 
-  emptyBtn: { paddingVertical: 8, paddingHorizontal: 16, backgroundColor: 'rgba(255, 59, 48, 0.1)', borderRadius: 100 },
-  emptyBtnText: { color: '#ff3b30', fontWeight: '700', fontSize: 14 },
+  emptyBtn: { paddingVertical: 9, paddingHorizontal: 16, borderRadius: 10, borderWidth: 1 },
+  emptyBtnText: { fontWeight: '700', fontSize: 13.5 },
 
-  mainTitle: { fontSize: 28, fontWeight: "700", marginTop: 24, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, marginTop: 6, marginBottom: 24 },
+  mainTitle: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },
+  subtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 24 },
 
   scrollArea: { flex: 1 },
-  emptyState: { alignItems: 'center', marginTop: 60 },
-  emptyText: { fontSize: 15, fontWeight: '500' },
+  emptyState: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: 40,
+    paddingHorizontal: 28,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: "700", marginTop: 14 },
+  emptySubtitle: { fontSize: 13, textAlign: "center", marginTop: 6, lineHeight: 19 },
 
-  trashCard: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1, marginBottom: 12 },
-  cardInfo: { flex: 1, paddingRight: 16 },
-  cardTitle: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
-  cardSubtitle: { fontSize: 13, color: '#ff3b30', fontWeight: '500' },
+  trashCard: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
+  cardInfo: { flex: 1, paddingRight: 14 },
+  cardTitle: { fontSize: 15, fontWeight: '600' },
 
   actionsContainer: { flexDirection: 'row', gap: 8 },
-  actionBtn: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center' }
+  actionBtn: { width: 36, height: 36, borderRadius: 8, justifyContent: 'center', alignItems: 'center' }
 });

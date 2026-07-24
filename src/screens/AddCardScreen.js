@@ -1,10 +1,11 @@
 import React, { useState, useRef, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { ArrowLeft } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { addCardToDeck } from '../data/flashcardsData';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createId } from '../utils/createId';
 
 export default function AddCardScreen() {
@@ -12,13 +13,11 @@ export default function AddCardScreen() {
   const route = useRoute();
   const { colors } = useTheme();
 
-  // Safely get deckId from params
   const deckId = route.params?.deckId;
 
   const [frontText, setFrontText] = useState("");
   const [backText, setBackText] = useState("");
 
-  // Ref for the front input to auto-focus when adding multiple cards
   const frontInputRef = useRef(null);
 
   const handleSaveCard = useCallback(async () => {
@@ -45,7 +44,7 @@ export default function AddCardScreen() {
 
     try {
       await addCardToDeck(deckId, newCard);
-      Alert.alert("Success", "Card added successfully!", [
+      Alert.alert("Card Added", "Your flashcard has been saved.", [
         {
           text: "Add Another",
           onPress: () => {
@@ -65,23 +64,24 @@ export default function AddCardScreen() {
   }, [deckId, frontText, backText, navigation]);
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-    >
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
-      <View style={{ flex: 1, paddingHorizontal: "6%", paddingTop: "16%", paddingBottom: "10%" }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
+        <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
+        <View style={{ flex: 1, paddingHorizontal: "6%", paddingTop: 16, paddingBottom: "10%" }}>
 
         {/* Header Row */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={[styles.iconButton, { borderColor: colors.border }]}
+            style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}
           >
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <ArrowLeft size={20} color={colors.text} />
           </TouchableOpacity>
-          <View style={{ width: 46 }} />
+          <View style={{ width: 42 }} />
         </View>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Add Flashcard</Text>
@@ -122,23 +122,24 @@ export default function AddCardScreen() {
 
         </ScrollView>
 
-        <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.button }]} onPress={handleSaveCard}>
-          <Text style={[styles.saveButtonText, { color: colors.buttonText }]}>Save Card</Text>
+        <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.accent }]} onPress={handleSaveCard}>
+          <Text style={styles.saveButtonText}>Save Card</Text>
         </TouchableOpacity>
 
       </View>
     </KeyboardAvoidingView>
-  );
+  </SafeAreaView>
+);
 }
 
 const styles = StyleSheet.create({
-  iconButton: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 28, fontWeight: "700", marginTop: 24, letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, marginTop: 6, marginBottom: 24 },
+  iconButton: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  headerTitle: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 28 },
   inputContainer: { marginBottom: 24 },
-  inputLabel: { fontSize: 16, fontWeight: '700', marginBottom: 8 },
-  textInput: { borderWidth: 1, borderRadius: 16, padding: 16, fontSize: 16, minHeight: 120 },
+  inputLabel: { fontSize: 15, fontWeight: '700', marginBottom: 10 },
+  textInput: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 15.5, minHeight: 120 },
   backInput: { minHeight: 160 },
-  saveButton: { paddingVertical: 16, borderRadius: 100, alignItems: 'center', marginTop: 'auto' },
-  saveButtonText: { fontSize: 16, fontWeight: '700' }
+  saveButton: { paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 'auto' },
+  saveButtonText: { fontSize: 15.5, fontWeight: '700', color: '#FFFFFF' }
 });

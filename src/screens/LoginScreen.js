@@ -10,9 +10,9 @@ import {
   Platform,
   ScrollView,
 } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, Mail, Lock, EyeOff, Eye } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen({ navigation }) {
@@ -90,44 +90,56 @@ export default function LoginScreen({ navigation }) {
     setResetSent(false);
   }
 
+  const inputStyle = {
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    paddingHorizontal: 18,
+    height: 56,
+  };
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: "7%",
-          paddingTop: "18%",
-          paddingBottom: "10%",
-          flexGrow: 1,
-        }}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
+        <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: "7%",
+            paddingTop: 16,
+            paddingBottom: "10%",
+            flexGrow: 1,
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
         {mode === "reset" && (
           <TouchableOpacity
             onPress={() => switchMode("signin")}
             style={{
               width: 42,
               height: 42,
-              borderRadius: 21,
+              borderRadius: 12,
               borderWidth: 1,
               borderColor: colors.border,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
-            <Ionicons name="arrow-back" size={20} color={colors.text} />
+            <ArrowLeft size={20} color={colors.text} />
           </TouchableOpacity>
         )}
 
         <Text
           style={{
             color: colors.text,
-            fontSize: 32,
+            fontSize: 34,
             fontWeight: "700",
-            marginTop: 32,
+            marginTop: 36,
             letterSpacing: -0.5,
           }}
         >
@@ -145,20 +157,9 @@ export default function LoginScreen({ navigation }) {
             : "Enter your email and we'll send you a reset link."}
         </Text>
 
-        <View style={{ marginTop: 32 }}>
-          <View
-            style={{
-              borderWidth: 1,
-              borderColor: colors.border,
-              backgroundColor: colors.card,
-              flexDirection: "row",
-              alignItems: "center",
-              borderRadius: 100,
-              paddingHorizontal: 18,
-              height: 54,
-            }}
-          >
-            <Feather name="mail" size={18} color={colors.text} />
+        <View style={{ marginTop: 40 }}>
+          <View style={inputStyle}>
+            <Mail size={17} color={colors.subtext} />
             <TextInput
               value={email}
               placeholder="Email Address"
@@ -178,20 +179,8 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           {mode === "signin" && (
-            <View
-              style={{
-                borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.card,
-                flexDirection: "row",
-                alignItems: "center",
-                borderRadius: 100,
-                paddingHorizontal: 18,
-                height: 54,
-                marginTop: 14,
-              }}
-            >
-              <Feather name="lock" size={18} color={colors.text} />
+            <View style={[inputStyle, { marginTop: 12 }]}>
+              <Lock size={17} color={colors.subtext} />
               <TextInput
                 value={password}
                 placeholder="Password"
@@ -211,11 +200,11 @@ export default function LoginScreen({ navigation }) {
                 onPress={() => setShowPassword((v) => !v)}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Feather
-                  name={showPassword ? "eye-off" : "eye"}
-                  size={18}
-                  color={colors.subtext}
-                />
+                {showPassword ? (
+                  <EyeOff size={17} color={colors.subtext} />
+                ) : (
+                  <Eye size={17} color={colors.subtext} />
+                )}
               </TouchableOpacity>
             </View>
           )}
@@ -223,14 +212,13 @@ export default function LoginScreen({ navigation }) {
           {mode === "signin" && (
             <TouchableOpacity
               onPress={() => switchMode("reset")}
-              style={{ alignSelf: "flex-end", marginTop: 12 }}
+              style={{ alignSelf: "flex-end", marginTop: 14 }}
             >
               <Text
                 style={{
-                  color: colors.text,
+                  color: colors.accent,
                   fontSize: 13.5,
                   fontWeight: "600",
-                  textDecorationLine: "underline",
                 }}
               >
                 Forgotten Password?
@@ -268,8 +256,8 @@ export default function LoginScreen({ navigation }) {
             style={{
               marginTop: 22,
               backgroundColor: colors.button,
-              height: 54,
-              borderRadius: 100,
+              height: 56,
+              borderRadius: 12,
               justifyContent: "center",
               alignItems: "center",
               opacity: loading ? 0.7 : 1,
@@ -295,12 +283,12 @@ export default function LoginScreen({ navigation }) {
               onPress={handleGuestLogin}
               disabled={loading}
               style={{
-                marginTop: 14,
+                marginTop: 12,
                 backgroundColor: colors.card,
                 borderWidth: 1,
                 borderColor: colors.border,
-                height: 54,
-                borderRadius: 100,
+                height: 56,
+                borderRadius: 12,
                 justifyContent: "center",
                 alignItems: "center",
               }}
@@ -341,5 +329,6 @@ export default function LoginScreen({ navigation }) {
         )}
       </ScrollView>
     </KeyboardAvoidingView>
-  );
+  </SafeAreaView>
+);
 }

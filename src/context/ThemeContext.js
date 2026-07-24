@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -8,6 +8,7 @@ export const useTheme = () => useContext(ThemeContext);
 
 const THEME_KEY = '@app_theme_preference';
 const AMOLED_KEY = '@app_amoled_preference';
+const ACCENT = '#F97316';
 
 export const ThemeProvider = ({ children }) => {
   const systemColorScheme = useColorScheme();
@@ -35,46 +36,82 @@ export const ThemeProvider = ({ children }) => {
 
   const theme = userTheme || systemColorScheme || 'light';
 
-  const toggleTheme = async () => {
-    const nextTheme = theme === 'light' ? 'dark' : 'light';
-    setUserTheme(nextTheme);
-    await AsyncStorage.setItem(THEME_KEY, nextTheme);
-  };
+  const toggleTheme = useCallback(async () => {
+    setUserTheme((prevTheme) => {
+      const current = prevTheme || systemColorScheme || 'light';
+      const nextTheme = current === 'light' ? 'dark' : 'light';
+      AsyncStorage.setItem(THEME_KEY, nextTheme);
+      return nextTheme;
+    });
+  }, [systemColorScheme]);
 
-  const setSystemTheme = async (useSystem) => {
+  const setSystemTheme = useCallback(async (useSystem) => {
     if (useSystem) {
       setUserTheme(null);
       await AsyncStorage.setItem(THEME_KEY, 'system');
     } else {
-      setUserTheme(theme);
-      await AsyncStorage.setItem(THEME_KEY, theme);
+      const currentTheme = theme;
+      setUserTheme(currentTheme);
+      await AsyncStorage.setItem(THEME_KEY, currentTheme);
     }
-  };
+  }, [theme]);
 
-  const toggleAmoled = async () => {
-    const nextAmoled = !isAmoled;
-    setIsAmoled(nextAmoled);
-    await AsyncStorage.setItem(AMOLED_KEY, nextAmoled.toString());
-  };
+  const toggleAmoled = useCallback(async () => {
+    setIsAmoled((prev) => {
+      const nextAmoled = !prev;
+      AsyncStorage.setItem(AMOLED_KEY, nextAmoled.toString());
+      return nextAmoled;
+    });
+  }, []);
 
-  const colors = {
-    bg: theme === 'light' ? '#FFFFFF' : (isAmoled ? '#000000' : '#121212'),
-    card: theme === 'light' ? '#FAFAFA' : (isAmoled ? '#0A0A0A' : '#1E1E1E'),
-    text: theme === 'light' ? '#0A0A0A' : '#FFFFFF',
-    subtext: theme === 'light' ? '#6B6B6B' : '#A0A0A0',
-    border: theme === 'light' ? '#E2E2E2' : (isAmoled ? '#1A1A1A' : '#2C2C2C'),
-    button: theme === 'light' ? '#111111' : '#FFFFFF',
-    buttonText: theme === 'light' ? '#FFFFFF' : '#111111',
-    danger: '#D92D20',
-    primary: theme === 'light' ? '#111111' : '#FFFFFF',
-    chipBorder: theme === 'light' ? '#E2E2E2' : '#333333',
-    success: '#12794F',
+  const colors = useMemo(() => ({
+    // Backgrounds & Surfaces
+    bg:          theme === 'light' ? '#F5F4F0' : (isAmoled ? '#000000' : '#0D0D0D'),
+    card:        theme === 'light' ? '#FFFFFF' : (isAmoled ? '#0A0A0A' : '#161616'),
+    statCard:    theme === 'light' ? '#F7F5F1' : (isAmoled ? '#121212' : '#1C1C1C'),
+    actionChipSurface: theme === 'light' ? '#F8F7F3' : (isAmoled ? '#121212' : '#1C1C1C'),
+    emptyStateSurface: theme === 'light' ? '#FAF9F6' : (isAmoled ? '#0E0E0E' : '#181818'),
+    surface:     theme === 'light' ? '#F7F5F1' : (isAmoled ? '#121212' : '#1F1F1F'),
+    surfaceSubtle: theme === 'light' ? '#FAF9F6' : (isAmoled ? '#0E0E0E' : '#181818'),
+
+    // Text
+    text:        theme === 'light' ? '#1A1A1A' : '#F8F8F8',
+    subtext:     theme === 'light' ? '#6E6B66' : '#888888',
+    mutedText:   theme === 'light' ? '#9A958D' : '#666666',
+
+    // Borders
+    border:      theme === 'light' ? '#ECE8E2' : (isAmoled ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.09)'),
+
+    // Accent (constant across themes — single brand color)
+    accent:      ACCENT,
+    accentSoft:  theme === 'light' ? 'rgba(249, 115, 22, 0.12)' : 'rgba(249, 115, 22, 0.20)',
+
+    // Primary action (buttons, active states)
+    button:      ACCENT,
+    buttonText:  '#FFFFFF',
+    primary:     ACCENT,
+
+    // Semantic
+    danger:      '#D92D20',
+    success:     '#12794F',
+    chipBorder:  theme === 'light' ? '#ECE8E2' : (isAmoled ? '#1A1A1A' : '#252525'),
     customFallback: '#4B5563',
-  };
+  }), [theme, isAmoled]);
+
+  const contextValue = useMemo(() => ({
+    theme,
+    isAmoled,
+    toggleTheme,
+    setSystemTheme,
+    userTheme,
+    toggleAmoled,
+    colors,
+  }), [theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors]);
 
   return (
-    <ThemeContext.Provider value={{ theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors }}>
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );
 };
+

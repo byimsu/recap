@@ -13,10 +13,11 @@ import {
   Alert,
   ActivityIndicator
 } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Archive, FolderOpen, ArrowLeft, ChevronRight, FolderPlus, Pen, Trash2 } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { createSubject, deleteSubject, loadSubjectsWithNoteCounts, renameSubject } from '../data/subjectsData';
 
 const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) => (
@@ -26,8 +27,12 @@ const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) =>
     onLongPress={() => onLongPress(item)}
     activeOpacity={0.7}
   >
-    <View style={[styles.subjectIcon, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-      <Ionicons name={item.isSystem ? "archive-outline" : "folder-open"} size={24} color={colors.subtext} />
+    <View style={[styles.subjectIcon, { backgroundColor: colors.accentSoft }]}>
+      {item.isSystem ? (
+        <Archive size={20} color={colors.accent} />
+      ) : (
+        <FolderOpen size={20} color={colors.accent} />
+      )}
     </View>
     <View style={styles.subjectTextContainer}>
       <Text style={[styles.subjectTitle, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
@@ -35,7 +40,7 @@ const SubjectItem = memo(({ item, colors, notesCount, onPress, onLongPress }) =>
         {notesCount[item.id] || 0} Document{(notesCount[item.id] !== 1) ? 's' : ''}
       </Text>
     </View>
-    <Feather name="chevron-right" size={20} color={colors.subtext} />
+    <ChevronRight size={17} color={colors.subtext} />
   </TouchableOpacity>
 ));
 
@@ -43,17 +48,14 @@ export default function NotesScreen() {
   const navigation = useNavigation();
   const { colors } = useTheme();
 
-  // Data States
   const [subjects, setSubjects] = useState([]);
-  const [notesCount, setNotesCount] = useState({}); // To display how many notes are in each folder
+  const [notesCount, setNotesCount] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
-  // Modal States
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isOptionsModalVisible, setIsOptionsModalVisible] = useState(false);
   const [isRenameModalVisible, setIsRenameModalVisible] = useState(false);
 
-  // Interaction States
   const [subjectInputName, setSubjectInputName] = useState("");
   const [selectedSubject, setSelectedSubject] = useState(null);
 
@@ -83,7 +85,6 @@ export default function NotesScreen() {
 
     try {
       const updatedSubjects = await createSubject(subjectInputName.trim());
-
       setSubjects(updatedSubjects);
       setSubjectInputName("");
       setIsCreateModalVisible(false);
@@ -93,16 +94,15 @@ export default function NotesScreen() {
     }
   };
 
-  const handleLongPress = (subject) => {
+  const handleLongPress = useCallback((subject) => {
     if (subject.isSystem) return;
     setSelectedSubject(subject);
     setIsOptionsModalVisible(true);
-  };
+  }, []);
 
   const openRenameModal = () => {
     setIsOptionsModalVisible(false);
-    setSubjectInputName(selectedSubject.name); // Pre-fill with existing name
-    // Slight delay to allow options modal to close smoothly before opening keyboard
+    setSubjectInputName(selectedSubject.name);
     setTimeout(() => {
       setIsRenameModalVisible(true);
     }, 150);
@@ -114,7 +114,6 @@ export default function NotesScreen() {
     try {
       const updatedSubjects = await renameSubject(selectedSubject.id, subjectInputName.trim());
       setSubjects(updatedSubjects);
-
       setIsRenameModalVisible(false);
       setSelectedSubject(null);
       setSubjectInputName("");
@@ -140,7 +139,6 @@ export default function NotesScreen() {
               const data = await deleteSubject(selectedSubject.id);
               setSubjects(data.subjects);
               setNotesCount(data.notesCount);
-
               setSelectedSubject(null);
             } catch (error) {
               console.error("Error deleting subject:", error);
@@ -162,7 +160,7 @@ export default function NotesScreen() {
   }, [handleLongPress]);
 
   const renderSubjectItem = useCallback(({ item }) => (
-    <SubjectItem 
+    <SubjectItem
       item={item}
       colors={colors}
       notesCount={notesCount}
@@ -172,28 +170,29 @@ export default function NotesScreen() {
   ), [colors, notesCount, handlePressSubject, handleLongPressSubject]);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.bg }]}>
+      <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
 
       <View style={styles.content}>
         {/* Header */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border }]}>
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.iconBtn, { borderColor: colors.border, backgroundColor: colors.card }]}>
+            <ArrowLeft size={20} color={colors.text} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={[styles.addBtn, { backgroundColor: colors.primary }]}>
-            <Feather name="folder-plus" size={18} color={colors.buttonText} />
-            <Text style={[styles.addBtnText, { color: colors.buttonText }]}>New Folder</Text>
-          </TouchableOpacity>
+          {subjects.length > 0 && (
+            <TouchableOpacity onPress={() => setIsCreateModalVisible(true)} style={[styles.addBtn, { backgroundColor: colors.accent }]}>
+              <FolderPlus size={16} color="#FFFFFF" />
+              <Text style={styles.addBtnText}>New Folder</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={[styles.mainTitle, { color: colors.text }]}>Your Subjects</Text>
-        <Text style={[styles.subtitle, { color: colors.subtext }]}>Tap to open. Press and hold to edit.</Text>
+        <Text style={[styles.subtitle, { color: colors.subtext }]}>Tap to open. Press and hold to rename or delete.</Text>
 
-        {/* Subjects List */}
         {isLoading ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <FlatList
@@ -203,16 +202,22 @@ export default function NotesScreen() {
             showsVerticalScrollIndicator={false}
             style={styles.scrollArea}
             getItemLayout={(data, index) => (
-              { length: 80, offset: 80 * index, index } // Assuming approx 80px height
+              { length: 84, offset: 84 * index, index }
             )}
             contentContainerStyle={{ paddingBottom: 40 }}
             ListEmptyComponent={
               <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="folder-open-outline" size={32} color={colors.subtext} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>No folders yet</Text>
+                <FolderOpen size={30} color={colors.border} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing here yet</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
-                  Tap the "New Folder" button above to start organizing your study materials!
+                  Create your first subject folder to start organizing study materials.
                 </Text>
+                <TouchableOpacity
+                  onPress={() => setIsCreateModalVisible(true)}
+                  style={[styles.emptyCta, { backgroundColor: colors.accent }]}
+                >
+                  <Text style={styles.emptyCtaText}>New Folder</Text>
+                </TouchableOpacity>
               </View>
             }
           />
@@ -226,10 +231,10 @@ export default function NotesScreen() {
           style={styles.modalOverlay}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.bg }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>New Subject Folder</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+              style={[styles.input, { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }]}
               placeholder="e.g. Physics 101"
               placeholderTextColor={colors.subtext}
               value={subjectInputName}
@@ -240,8 +245,8 @@ export default function NotesScreen() {
               <TouchableOpacity onPress={() => setIsCreateModalVisible(false)} style={styles.modalCancelBtn}>
                 <Text style={[styles.modalCancelText, { color: colors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleCreateSubject} style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.modalSaveText, { color: colors.buttonText }]}>Create</Text>
+              <TouchableOpacity onPress={handleCreateSubject} style={[styles.modalSaveBtn, { backgroundColor: colors.accent }]}>
+                <Text style={styles.modalSaveText}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -255,10 +260,10 @@ export default function NotesScreen() {
           style={styles.modalOverlay}
           keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
         >
-          <View style={[styles.modalContent, { backgroundColor: colors.bg }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.modalTitle, { color: colors.text }]}>Rename Folder</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+              style={[styles.input, { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }]}
               placeholder="Enter new name"
               placeholderTextColor={colors.subtext}
               value={subjectInputName}
@@ -272,96 +277,85 @@ export default function NotesScreen() {
               >
                 <Text style={[styles.modalCancelText, { color: colors.subtext }]}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={handleRenameSubject} style={[styles.modalSaveBtn, { backgroundColor: colors.primary }]}>
-                <Text style={[styles.modalSaveText, { color: colors.buttonText }]}>Save</Text>
+              <TouchableOpacity onPress={handleRenameSubject} style={[styles.modalSaveBtn, { backgroundColor: colors.accent }]}>
+                <Text style={styles.modalSaveText}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Options Menu (Triggered by Long Press) */}
+      {/* Options Menu (Long Press) */}
       <Modal visible={isOptionsModalVisible} transparent animationType="fade">
         <TouchableOpacity style={styles.bottomSheetOverlay} activeOpacity={1} onPress={() => setIsOptionsModalVisible(false)}>
-          <View style={[styles.bottomSheet, { backgroundColor: colors.bg }]}>
+          <View style={[styles.bottomSheet, { backgroundColor: colors.card }]}>
             <View style={[styles.sheetHandle, { backgroundColor: colors.border }]} />
             <Text style={[styles.sheetTitle, { color: colors.text }]}>{selectedSubject?.name}</Text>
 
             <TouchableOpacity style={[styles.sheetBtn, { borderBottomColor: colors.border }]} onPress={openRenameModal}>
-              <Feather name="edit-2" size={20} color={colors.text} />
+              <Pen size={18} color={colors.text} />
               <Text style={[styles.sheetBtnText, { color: colors.text }]}>Rename Folder</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={[styles.sheetBtn, { borderBottomColor: colors.border }]} onPress={handleDeleteSubject}>
-              <Feather name="trash-2" size={20} color={colors.danger} />
+              <Trash2 size={18} color={colors.danger} />
               <Text style={[styles.sheetBtnText, { color: colors.danger }]}>Delete Folder</Text>
             </TouchableOpacity>
-
           </View>
         </TouchableOpacity>
       </Modal>
 
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: "6%", paddingTop: "16%" },
+  content: { flex: 1, paddingHorizontal: "6%", paddingTop: 16 },
 
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  iconBtn: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, justifyContent: "center", alignItems: "center" },
-  addBtn: { flexDirection: 'row', paddingHorizontal: 20, height: 46, borderRadius: 100, alignItems: 'center', justifyContent: 'center' },
-  addBtnText: { fontWeight: '700', fontSize: 15, marginLeft: 8 },
+  iconBtn: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  addBtn: { flexDirection: 'row', paddingHorizontal: 18, height: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  addBtnText: { fontWeight: '700', fontSize: 14, marginLeft: 8, color: '#FFFFFF' },
 
-  mainTitle: { fontSize: 28, fontWeight: "700", marginTop: 24, letterSpacing: -0.5 },
-  subtitle: { fontSize: 14, marginTop: 6, marginBottom: 24 },
+  mainTitle: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },
+  subtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 24 },
 
   scrollArea: { flex: 1 },
 
-  subjectCard: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 20, borderWidth: 1, marginBottom: 12 },
-  subjectIcon: { width: 50, height: 50, borderRadius: 14, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-  subjectTextContainer: { flex: 1, marginLeft: 16 },
-  subjectTitle: { fontSize: 17, fontWeight: '700', marginBottom: 4 },
-  subjectStats: { fontSize: 13, fontWeight: '500' },
+  subjectCard: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 12, borderWidth: 1, marginBottom: 10 },
+  subjectIcon: { width: 44, height: 44, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  subjectTextContainer: { flex: 1, marginLeft: 14 },
+  subjectTitle: { fontSize: 16, fontWeight: '700', marginBottom: 3 },
+  subjectStats: { fontSize: 12.5, fontWeight: '500' },
 
-  // Input Modals
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 },
-  modalContent: { padding: 24, borderRadius: 20 },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  input: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 24 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 },
+  modalContent: { padding: 24, borderRadius: 12, borderWidth: 1 },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  input: { borderWidth: 1, borderRadius: 10, padding: 14, fontSize: 15, marginBottom: 20 },
   modalButtons: { flexDirection: 'row', justifyContent: 'flex-end' },
-  modalCancelBtn: { paddingVertical: 12, paddingHorizontal: 20, marginRight: 8 },
-  modalCancelText: { fontSize: 16, fontWeight: '600' },
-  modalSaveBtn: { paddingVertical: 12, paddingHorizontal: 24, borderRadius: 100 },
-  modalSaveText: { fontSize: 16, fontWeight: '700' },
+  modalCancelBtn: { paddingVertical: 11, paddingHorizontal: 18, marginRight: 8 },
+  modalCancelText: { fontSize: 15, fontWeight: '600' },
+  modalSaveBtn: { paddingVertical: 11, paddingHorizontal: 22, borderRadius: 10 },
+  modalSaveText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 
-  // Bottom Sheet Modal
   bottomSheetOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  bottomSheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
-  sheetHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
-  sheetTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
+  bottomSheet: { borderTopLeftRadius: 16, borderTopRightRadius: 16, padding: 24, paddingBottom: 40 },
+  sheetHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
+  sheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 16, textAlign: 'center' },
   sheetBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1 },
-  sheetBtnText: { fontSize: 16, fontWeight: '600', marginLeft: 16 },
-  
-  // Empty State
+  sheetBtnText: { fontSize: 15, fontWeight: '600', marginLeft: 14 },
+
   emptyContainer: {
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 28,
+    borderRadius: 12,
+    paddingVertical: 40,
+    paddingHorizontal: 28,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
+    marginTop: 16,
   },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 6,
-    lineHeight: 18,
-  },
+  emptyTitle: { fontSize: 16, fontWeight: "700", marginTop: 14 },
+  emptySubtitle: { fontSize: 13, textAlign: "center", marginTop: 6, lineHeight: 19 },
+  emptyCta: { marginTop: 20, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
+  emptyCtaText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
 });

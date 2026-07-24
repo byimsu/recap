@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { ArrowLeft, Layers, Plus } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
 import { getAllDecks, createDeck, deleteDeck } from '../data/flashcardsData';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Flashcards() {
   const navigation = useNavigation();
@@ -33,7 +34,6 @@ export default function Flashcards() {
     }
   };
 
-  // Create a New Deck Locally
   const handleCreateDeck = async () => {
     if (!newDeckTitle.trim()) return;
 
@@ -76,7 +76,7 @@ export default function Flashcards() {
 
   const renderDeckItem = ({ item }) => {
     const isEmpty = (item.cardCount || 0) === 0;
-    
+
     return (
       <TouchableOpacity
         style={[styles.deckCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -87,23 +87,26 @@ export default function Flashcards() {
         }}
         activeOpacity={0.7}
       >
-        <View style={{ flex: 1 }}>
+        <View style={[styles.deckIconBadge, { backgroundColor: colors.accentSoft }]}>
+          <Layers size={18} color={colors.accent} />
+        </View>
+        <View style={{ flex: 1, marginLeft: 14 }}>
           <Text style={[styles.deckTitle, { color: colors.text }]} numberOfLines={1}>{item.title}</Text>
           <Text style={[styles.deckStats, { color: colors.subtext }]}>{item.cardCount || 0} Cards</Text>
         </View>
-  
+
         <View style={styles.deckActions}>
           <TouchableOpacity
             style={[styles.addCardBtn, { backgroundColor: colors.bg, borderColor: colors.border }]}
             onPress={() => navigation.navigate("AddCard", { deckId: item.id })}
           >
-            <Feather name="plus" size={18} color={colors.text} />
+            <Plus size={16} color={colors.text} />
           </TouchableOpacity>
-  
+
           <TouchableOpacity
             style={[
-              styles.studyBtn, 
-              { backgroundColor: isEmpty ? colors.border : colors.button },
+              styles.studyBtn,
+              { backgroundColor: isEmpty ? colors.border : colors.accent },
               isEmpty && { opacity: 0.5 }
             ]}
             disabled={isEmpty}
@@ -111,7 +114,7 @@ export default function Flashcards() {
               navigation.navigate("Review", { deckId: item.id, deckTitle: item.title });
             }}
           >
-            <Text style={[styles.studyBtnText, { color: isEmpty ? colors.subtext : colors.buttonText }]}>Study</Text>
+            <Text style={[styles.studyBtnText, { color: isEmpty ? colors.subtext : '#FFFFFF' }]}>Study</Text>
           </TouchableOpacity>
         </View>
       </TouchableOpacity>
@@ -119,47 +122,36 @@ export default function Flashcards() {
   };
 
   return (
-    <View style={{ backgroundColor: colors.bg, flex: 1 }}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
-      <View style={{ flex: 1, paddingHorizontal: "6%", paddingTop: "16%", paddingBottom: "10%" }}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.bg, flex: 1 }}>
+      <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
+      <View style={{ flex: 1, paddingHorizontal: "6%", paddingTop: 16, paddingBottom: "10%" }}>
 
         {/* Header Row */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={[styles.iconButton, { borderColor: colors.border }]}
+            style={[styles.iconButton, { borderColor: colors.border, backgroundColor: colors.card }]}
           >
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
+            <ArrowLeft size={20} color={colors.text} />
           </TouchableOpacity>
-          <View style={{ width: 46 }} />
+          {decks.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setIsModalVisible(true)}
+              style={[styles.addBtn, { backgroundColor: colors.accent }]}
+            >
+              <Plus size={16} color="#FFFFFF" />
+              <Text style={styles.addBtnText}>New Deck</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         <Text style={[styles.headerTitle, { color: colors.text }]}>Your Decks</Text>
-        <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>Create, import, and review your custom flashcards locally.</Text>
-
-        {/* Action Buttons */}
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.button }]}
-            onPress={() => setIsModalVisible(true)}
-          >
-            <Feather name="plus" size={18} color={colors.buttonText} />
-            <Text style={[styles.actionButtonText, { color: colors.buttonText }]}>New Deck</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]}
-            onPress={handleImportDeck}
-          >
-            <Feather name="download" size={18} color={colors.text} />
-            <Text style={[styles.actionButtonText, { color: colors.text }]}>Import</Text>
-          </TouchableOpacity>
-        </View>
+        <Text style={[styles.headerSubtitle, { color: colors.subtext }]}>Create and review your custom flashcards locally.</Text>
 
         {/* Decks List */}
         {isLoading ? (
           <View style={{ flex: 1, justifyContent: 'center' }}>
-            <ActivityIndicator size="large" color={colors.button} />
+            <ActivityIndicator size="large" color={colors.accent} />
           </View>
         ) : (
           <FlatList
@@ -167,14 +159,20 @@ export default function Flashcards() {
             renderItem={renderDeckItem}
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingTop: 24, paddingBottom: 40 }}
+            contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
             ListEmptyComponent={
               <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Ionicons name="albums-outline" size={32} color={colors.subtext} />
-                <Text style={[styles.emptyTitle, { color: colors.text }]}>No flashcards yet</Text>
+                <Layers size={30} color={colors.border} />
+                <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing here yet</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
-                  Create a deck and add cards to start studying with spaced repetition.
+                  Create your first deck to start studying with spaced repetition.
                 </Text>
+                <TouchableOpacity
+                  onPress={() => setIsModalVisible(true)}
+                  style={[styles.emptyCta, { backgroundColor: colors.accent }]}
+                >
+                  <Text style={styles.emptyCtaText}>New Deck</Text>
+                </TouchableOpacity>
               </View>
             }
           />
@@ -183,10 +181,10 @@ export default function Flashcards() {
         {/* Create Deck Modal */}
         <Modal visible={isModalVisible} transparent animationType="fade">
           <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.bg }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Create New Local Deck</Text>
+            <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>New Deck</Text>
               <TextInput
-                style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+                style={[styles.input, { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }]}
                 placeholder="e.g., Biology 101"
                 placeholderTextColor={colors.subtext}
                 value={newDeckTitle}
@@ -194,11 +192,11 @@ export default function Flashcards() {
                 autoFocus
               />
               <View style={styles.modalButtons}>
-                <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.modalBtn}>
-                  <Text style={[styles.modalBtnText, { color: colors.subtext }]}>Cancel</Text>
+                <TouchableOpacity onPress={() => setIsModalVisible(false)} style={styles.modalCancelBtn}>
+                  <Text style={[styles.modalCancelText, { color: colors.subtext }]}>Cancel</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleCreateDeck} style={styles.modalBtn}>
-                  <Text style={[styles.modalBtnText, { color: colors.text }]}>Create</Text>
+                <TouchableOpacity onPress={handleCreateDeck} style={[styles.modalSaveBtn, { backgroundColor: colors.accent }]}>
+                  <Text style={styles.modalSaveText}>Create</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -206,48 +204,46 @@ export default function Flashcards() {
         </Modal>
 
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  iconButton: { width: 46, height: 46, borderRadius: 23, borderWidth: 1, justifyContent: "center", alignItems: "center" },
-  headerTitle: { fontSize: 28, fontWeight: "700", marginTop: 24, letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 14, marginTop: 6, marginBottom: 24 },
-  actionsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 100, marginHorizontal: 4 },
-  actionButtonText: { fontSize: 16, fontWeight: '700', marginLeft: 8 },
-  deckCard: { borderRadius: 18, padding: 20, borderWidth: 1, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  deckTitle: { fontSize: 18, fontWeight: '700' },
-  deckStats: { fontSize: 13, marginTop: 4 },
+  iconButton: { width: 42, height: 42, borderRadius: 10, borderWidth: 1, justifyContent: "center", alignItems: "center" },
+  addBtn: { flexDirection: 'row', paddingHorizontal: 18, height: 42, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  addBtnText: { fontWeight: '700', fontSize: 14, marginLeft: 8, color: '#FFFFFF' },
+  headerTitle: { fontSize: 30, fontWeight: "700", marginTop: 28, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 13.5, marginTop: 6, marginBottom: 24 },
+  actionsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 13, borderRadius: 10, marginHorizontal: 4 },
+  actionButtonText: { fontSize: 14.5, fontWeight: '700', marginLeft: 8 },
+  deckCard: { borderRadius: 12, padding: 18, borderWidth: 1, marginBottom: 12, flexDirection: 'row', alignItems: 'center' },
+  deckIconBadge: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  deckTitle: { fontSize: 16, fontWeight: '700' },
+  deckStats: { fontSize: 12.5, marginTop: 3 },
   deckActions: { flexDirection: 'row', alignItems: 'center', marginLeft: 12 },
-  addCardBtn: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  studyBtn: { paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
-  studyBtnText: { fontWeight: '700' },
+  addCardBtn: { width: 36, height: 36, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
+  studyBtn: { paddingVertical: 9, paddingHorizontal: 18, borderRadius: 8 },
+  studyBtnText: { fontWeight: '700', fontSize: 13.5 },
   emptyContainer: {
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 28,
+    borderRadius: 12,
+    paddingVertical: 40,
+    paddingHorizontal: 28,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 20,
+    marginTop: 16,
   },
-  emptyTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginTop: 12,
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    textAlign: "center",
-    marginTop: 6,
-    lineHeight: 18,
-  },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-  modalContent: { width: '100%', borderRadius: 20, padding: 24 },
-  modalTitle: { fontSize: 20, fontWeight: '700', marginBottom: 16 },
-  input: { borderWidth: 1, borderRadius: 12, padding: 16, fontSize: 16, marginBottom: 24 },
+  emptyTitle: { fontSize: 16, fontWeight: "700", marginTop: 14 },
+  emptySubtitle: { fontSize: 13, textAlign: "center", marginTop: 6, lineHeight: 19 },
+  emptyCta: { marginTop: 20, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 10 },
+  emptyCtaText: { color: '#FFFFFF', fontWeight: '700', fontSize: 14 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { width: '100%', borderRadius: 12, padding: 24, borderWidth: 1 },
+  modalTitle: { fontSize: 18, fontWeight: '700', marginBottom: 16 },
+  input: { borderWidth: 1, borderRadius: 10, padding: 14, fontSize: 15, marginBottom: 20 },
   modalButtons: { flexDirection: 'row', justifyContent: 'flex-end' },
-  modalBtn: { marginLeft: 24, paddingVertical: 8 },
-  modalBtnText: { fontSize: 16, fontWeight: '700' }
+  modalCancelBtn: { paddingVertical: 11, paddingHorizontal: 18, marginRight: 8 },
+  modalCancelText: { fontSize: 15, fontWeight: '600' },
+  modalSaveBtn: { paddingVertical: 11, paddingHorizontal: 22, borderRadius: 10 },
+  modalSaveText: { fontSize: 15, fontWeight: '700', color: '#FFFFFF' },
 });

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, isFirebaseReady } from '../api/firebase';
 import { isLocalGuestActive, setLocalGuestActive } from '../storage/authStorage';
@@ -69,7 +69,7 @@ export const AuthProvider = ({ children }) => {
 
   // --- Auth actions ---
 
-  const login = async (email, password) => {
+  const login = useCallback(async (email, password) => {
     setAuthStatus('loggingIn');
     try {
       const result = await authService.login(email, password);
@@ -78,10 +78,9 @@ export const AuthProvider = ({ children }) => {
       setAuthStatus('idle');
       throw error;
     }
-    // Note: setAuthStatus('idle') on success is handled by onAuthStateChanged -> checkAuth
-  };
+  }, []);
 
-  const register = async (email, password, name) => {
+  const register = useCallback(async (email, password, name) => {
     setAuthStatus('registering');
     try {
       const result = await authService.register(email, password, name);
@@ -90,9 +89,9 @@ export const AuthProvider = ({ children }) => {
       setAuthStatus('idle');
       throw error;
     }
-  };
+  }, []);
 
-  const loginAsGuest = async () => {
+  const loginAsGuest = useCallback(async () => {
     setAuthStatus('loggingIn');
     try {
       if (isFirebaseReady() && auth?.currentUser) {
@@ -106,9 +105,9 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setAuthStatus('idle');
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setAuthStatus('loggingOut');
     try {
       await setLocalGuestActive(false);
@@ -120,15 +119,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setAuthStatus('idle');
     }
-  };
+  }, []);
 
-  const sendPasswordReset = async (email) => {
+  const sendPasswordReset = useCallback(async (email) => {
     return authService.sendPasswordReset(email);
-  };
+  }, []);
 
-  const sendVerificationEmail = async () => {
+  const sendVerificationEmail = useCallback(async () => {
     return authService.sendVerificationEmail();
-  };
+  }, []);
 
   // --- Derived state ---
 
@@ -137,27 +136,43 @@ export const AuthProvider = ({ children }) => {
   const emailVerified = isGuest ? false : (user?.emailVerified ?? false);
   const isLoading = authStatus === 'initializing';
 
-  return (
-    <AuthContext.Provider value={{
-      // Existing (preserved for backward compatibility)
-      user,
-      isLoading,
-      loginAsGuest,
-      logout,
-      checkAuth,
+  const contextValue = useMemo(() => ({
+    // Existing (preserved for backward compatibility)
+    user,
+    isLoading,
+    loginAsGuest,
+    logout,
+    checkAuth,
 
-      // New
-      authStatus,
-      isAuthenticated,
-      isGuest,
-      emailVerified,
-      firebaseUser: isGuest ? null : user,
-      login,
-      register,
-      sendPasswordReset,
-      sendVerificationEmail,
-      getAuthErrorMessage,
-    }}>
+    // New
+    authStatus,
+    isAuthenticated,
+    isGuest,
+    emailVerified,
+    firebaseUser: isGuest ? null : user,
+    login,
+    register,
+    sendPasswordReset,
+    sendVerificationEmail,
+    getAuthErrorMessage,
+  }), [
+    user,
+    isLoading,
+    loginAsGuest,
+    logout,
+    checkAuth,
+    authStatus,
+    isAuthenticated,
+    isGuest,
+    emailVerified,
+    login,
+    register,
+    sendPasswordReset,
+    sendVerificationEmail,
+  ]);
+
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

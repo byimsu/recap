@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Text, View, TouchableOpacity, Switch, Alert, ActivityIndicator } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, ChevronRight, Palette, Smartphone, Moon, Sun, Trash2, Download, Upload } from 'lucide-react-native';
 import { useNavigation } from "@react-navigation/native";
 import { clearAllNotesToTrash } from '../data/notesData';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
   const Wrapper = onPress ? TouchableOpacity : View;
@@ -16,12 +16,12 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
         flexDirection: "row",
         alignItems: "center",
         paddingVertical: 16,
-        paddingHorizontal: 16,
+        paddingHorizontal: 18,
         backgroundColor: colors.card,
-        borderRadius: 16,
+        borderRadius: 12,
         borderWidth: 1,
         borderColor: colors.border,
-        marginBottom: 12,
+        marginBottom: 10,
         opacity: disabled ? 0.6 : 1,
       }}
     >
@@ -29,10 +29,8 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
         style={{
           width: 36,
           height: 36,
-          borderRadius: 18,
-          backgroundColor: colors.bg,
-          borderWidth: 1,
-          borderColor: colors.border,
+          borderRadius: 8,
+          backgroundColor: colors.accentSoft,
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -59,9 +57,6 @@ export default function Settings() {
   const { theme, isAmoled, toggleTheme, setSystemTheme, userTheme, toggleAmoled, colors } = useTheme();
   const [clearing, setClearing] = useState(false);
 
-  /**
-   * Moves every active note into Trash instead of deleting files outright.
-   */
   async function performClearCache() {
     setClearing(true);
     try {
@@ -98,35 +93,36 @@ export default function Settings() {
   }
 
   return (
-    <View style={{ backgroundColor: colors.bg, flex: 1 }}>
-      <View style={{ paddingHorizontal: "6%", paddingTop: "16%" }}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.bg, flex: 1 }}>
+      <View style={{ paddingHorizontal: "6%", paddingTop: 16 }}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
-            width: 46,
-            height: 46,
-            borderRadius: 23,
+            width: 42,
+            height: 42,
+            borderRadius: 10,
             borderWidth: 1,
             borderColor: colors.border,
+            backgroundColor: colors.card,
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} />
         </TouchableOpacity>
 
         <Text
           style={{
             color: colors.text,
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: "700",
-            marginTop: 24,
+            marginTop: 28,
             letterSpacing: -0.5,
           }}
         >
           Settings
         </Text>
-        <Text style={{ color: colors.subtext, fontSize: 14, marginTop: 6, marginBottom: 24 }}>
+        <Text style={{ color: colors.subtext, fontSize: 13.5, marginTop: 6, marginBottom: 28 }}>
           Manage app preferences and data.
         </Text>
       </View>
@@ -135,10 +131,10 @@ export default function Settings() {
         <Text
           style={{
             color: colors.subtext,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: "700",
             textTransform: "uppercase",
-            letterSpacing: 0.5,
+            letterSpacing: 0.8,
             marginBottom: 10,
           }}
         >
@@ -146,14 +142,14 @@ export default function Settings() {
         </Text>
         <Row
           colors={colors}
-          icon={<Feather name="smartphone" size={16} color={colors.text} />}
+          icon={<Smartphone size={16} color={colors.accent} />}
           label="Use System Theme"
           sublabel="Automatically match device theme"
           right={
             <Switch
               value={userTheme === null}
               onValueChange={setSystemTheme}
-              trackColor={{ false: "#e2e2e2", true: "#111111" }}
+              trackColor={{ false: colors.border, true: colors.accent }}
               thumbColor="#ffffff"
             />
           }
@@ -162,14 +158,14 @@ export default function Settings() {
         {userTheme !== null && (
           <Row
             colors={colors}
-            icon={<Feather name={theme === 'dark' ? "moon" : "sun"} size={16} color={colors.text} />}
+            icon={theme === 'dark' ? <Moon size={16} color={colors.accent} /> : <Sun size={16} color={colors.accent} />}
             label="Dark Mode"
             sublabel="Switch between light and dark"
             right={
               <Switch
                 value={theme === 'dark'}
                 onValueChange={toggleTheme}
-                trackColor={{ false: "#e2e2e2", true: "#111111" }}
+                trackColor={{ false: colors.border, true: colors.accent }}
                 thumbColor="#ffffff"
               />
             }
@@ -179,14 +175,14 @@ export default function Settings() {
         {theme === 'dark' && (
           <Row
             colors={colors}
-            icon={<Ionicons name="color-palette" size={16} color={colors.text} />}
+            icon={<Palette size={16} color={colors.accent} />}
             label="AMOLED Mode"
             sublabel="Pure black for OLED screens"
             right={
               <Switch
                 value={isAmoled}
                 onValueChange={toggleAmoled}
-                trackColor={{ false: "#e2e2e2", true: "#111111" }}
+                trackColor={{ false: colors.border, true: colors.accent }}
                 thumbColor="#ffffff"
               />
             }
@@ -196,11 +192,11 @@ export default function Settings() {
         <Text
           style={{
             color: colors.subtext,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: "700",
             textTransform: "uppercase",
-            letterSpacing: 0.5,
-            marginTop: 12,
+            letterSpacing: 0.8,
+            marginTop: 16,
             marginBottom: 10,
           }}
         >
@@ -210,26 +206,26 @@ export default function Settings() {
           colors={colors}
           icon={
             clearing ? (
-              <ActivityIndicator size="small" color={colors.text} />
+              <ActivityIndicator size="small" color={colors.accent} />
             ) : (
-              <Feather name="trash-2" size={16} color={colors.text} />
+              <Trash2 size={16} color={colors.accent} />
             )
           }
           label="Clear Cache"
           sublabel="Moves all uploaded notes to Trash"
           onPress={handleClearCache}
           disabled={clearing}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={17} color={colors.subtext} />}
         />
 
         <Text
           style={{
             color: colors.subtext,
-            fontSize: 12,
+            fontSize: 11,
             fontWeight: "700",
             textTransform: "uppercase",
-            letterSpacing: 0.5,
-            marginTop: 12,
+            letterSpacing: 0.8,
+            marginTop: 16,
             marginBottom: 10,
           }}
         >
@@ -237,21 +233,21 @@ export default function Settings() {
         </Text>
         <Row
           colors={colors}
-          icon={<Feather name="download" size={16} color={colors.text} />}
+          icon={<Download size={16} color={colors.accent} />}
           label="Export Data"
           sublabel="Back up notes and flashcards"
           onPress={handleExport}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={17} color={colors.subtext} />}
         />
         <Row
           colors={colors}
-          icon={<Feather name="upload" size={16} color={colors.text} />}
+          icon={<Upload size={16} color={colors.accent} />}
           label="Import Data"
           sublabel="Restore from a backup file"
           onPress={handleImport}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={17} color={colors.subtext} />}
         />
       </View>
-    </View>
+    </SafeAreaView>
   );
 }

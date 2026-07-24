@@ -1,4 +1,4 @@
-import { useState, useCallback, memo } from "react";
+import { useState, useCallback, useMemo, memo } from "react";
 import {
   Text,
   View,
@@ -11,8 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import {
   getAllDeadlines,
@@ -25,6 +24,7 @@ import {
 } from "../data/deadlinesData";
 import { getAllSubjects } from "../data/subjectsData";
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -53,42 +53,50 @@ function buildMonthGrid(year, month) {
   return weeks;
 }
 
-const CalendarDay = memo(({ day, dayIndex, dateString, bg, isToday, colors, onPress }) => (
-  <TouchableOpacity
-    onPress={() => onPress(dateString)}
-    style={{ flex: 1, aspectRatio: 1, padding: 3 }}
-  >
-    <View
-      style={{
-        flex: 1,
-        borderRadius: 10,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: bg ? bg : "transparent",
-        borderWidth: isToday && !bg ? 1.5 : 0,
-        borderColor: colors.text,
-      }}
+const CalendarDay = memo(({ day, dateString, bg, isToday, colors, onPress }) => {
+  const handlePress = useCallback(() => {
+    onPress(dateString);
+  }, [dateString, onPress]);
+
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      style={{ flex: 1, aspectRatio: 1, padding: 3 }}
     >
-      <Text
+      <View
         style={{
-          color: bg ? "#ffffff" : colors.text,
-          fontSize: 14,
-          fontWeight: isToday ? "800" : "500",
+          flex: 1,
+          borderRadius: 10,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: bg ? bg : "transparent",
+          borderWidth: isToday && !bg ? 1.5 : 0,
+          borderColor: colors.text,
         }}
       >
-        {day}
-      </Text>
-    </View>
-  </TouchableOpacity>
-));
+        <Text
+          style={{
+            color: bg ? "#ffffff" : colors.text,
+            fontSize: 14,
+            fontWeight: isToday ? "800" : "500",
+          }}
+        >
+          {day}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+});
 
 export default function Deadlines() {
   const navigation = useNavigation();
   const { colors } = useTheme();
-  const today = new Date();
 
-  // Calculate todayString early so it can be used in openDay for validation
-  const todayString = toDateString(today.getFullYear(), today.getMonth(), today.getDate());
+  const today = useMemo(() => new Date(), []);
+  const todayString = useMemo(
+    () => toDateString(today.getFullYear(), today.getMonth(), today.getDate()),
+    [today]
+  );
 
   const [viewYear, setViewYear] = useState(today.getFullYear());
   const [viewMonth, setViewMonth] = useState(today.getMonth());
@@ -199,34 +207,35 @@ export default function Deadlines() {
   };
 
   return (
-    <View style={{ backgroundColor: colors.bg, flex: 1 }}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.bg, flex: 1 }}>
+      <StatusBar style={colors.bg === '#FAFAFA' ? "dark" : "light"} />
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: "6%",
-          paddingTop: "16%",
+          paddingTop: 16,
           paddingBottom: "10%",
         }}
       >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
-            width: 46,
-            height: 46,
-            borderRadius: 23,
+            width: 42,
+            height: 42,
+            borderRadius: 10,
             borderWidth: 1,
             borderColor: colors.border,
+            backgroundColor: colors.card,
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <ArrowLeft size={22} color={colors.text} />
         </TouchableOpacity>
 
         <Text
           style={{
             color: colors.text,
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: "700",
             marginTop: 24,
             letterSpacing: -0.5,
@@ -248,13 +257,13 @@ export default function Deadlines() {
           }}
         >
           <TouchableOpacity onPress={() => changeMonth(-1)} style={{ padding: 8 }}>
-            <Ionicons name="chevron-back" size={20} color={colors.text} />
+            <ChevronLeft size={20} color={colors.text} />
           </TouchableOpacity>
           <Text style={{ color: colors.text, fontSize: 17, fontWeight: "700" }}>
             {MONTH_NAMES[viewMonth]} {viewYear}
           </Text>
           <TouchableOpacity onPress={() => changeMonth(1)} style={{ padding: 8 }}>
-            <Ionicons name="chevron-forward" size={20} color={colors.text} />
+            <ChevronRight size={20} color={colors.text} />
           </TouchableOpacity>
         </View>
 
@@ -310,7 +319,7 @@ export default function Deadlines() {
         </Text>
         {upcoming.length === 0 ? (
           <Text style={{ color: colors.subtext, fontSize: 14 }}>
-            No upcoming deadlines. Tap a date above to add one.
+          Nothing coming up. Tap a date above to add your first deadline.
           </Text>
         ) : (
           upcoming.map((d) => {
@@ -324,10 +333,10 @@ export default function Deadlines() {
                   flexDirection: "row",
                   alignItems: "center",
                   backgroundColor: colors.card,
-                  borderRadius: 14,
+                  borderRadius: 12,
                   borderWidth: 1,
                   borderColor: colors.border,
-                  padding: 14,
+                  padding: 18,
                   marginBottom: 10,
                 }}
               >
@@ -349,9 +358,16 @@ export default function Deadlines() {
                     {subject ? ` · ${subject.name}` : ""}
                   </Text>
                 </View>
-                <Text style={{ color: colors.subtext, fontSize: 12.5, fontWeight: "600" }}>
+                <Text style={{ color: colors.subtext, fontSize: 12.5, fontWeight: "600", marginRight: 12 }}>
                   {daysUntilLabel(d.date)}
                 </Text>
+                <TouchableOpacity
+                  onPress={() => handleDeleteDeadline(d.id)}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 4 }}
+                >
+                  <Trash2 size={16} color={colors.danger} />
+                </TouchableOpacity>
               </TouchableOpacity>
             );
           })
@@ -370,8 +386,8 @@ export default function Deadlines() {
           <View
             style={{
               backgroundColor: colors.bg,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
+              borderTopLeftRadius: 16,
+              borderTopRightRadius: 16,
               padding: 24,
               paddingBottom: 40,
             }}
@@ -410,7 +426,7 @@ export default function Deadlines() {
                       {d.title}
                     </Text>
                     <TouchableOpacity onPress={() => handleDeleteDeadline(d.id)}>
-                      <Feather name="trash-2" size={16} color={colors.danger} />
+                      <Trash2 size={16} color={colors.danger} />
                     </TouchableOpacity>
                   </View>
                 );
@@ -422,7 +438,7 @@ export default function Deadlines() {
                 marginTop: 20,
                 backgroundColor: colors.button,
                 paddingVertical: 14,
-                borderRadius: 100,
+                borderRadius: 12,
                 alignItems: "center",
               }}
             >
@@ -444,7 +460,7 @@ export default function Deadlines() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", padding: 20 }}
         >
-          <View style={{ backgroundColor: colors.bg, borderRadius: 20, padding: 24 }}>
+          <View style={{ backgroundColor: colors.card, borderRadius: 12, padding: 24 }}>
             <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 4 }}>
               New Deadline
             </Text>
@@ -502,7 +518,7 @@ export default function Deadlines() {
                     style={{
                       paddingVertical: 8,
                       paddingHorizontal: 14,
-                      borderRadius: 100,
+                      borderRadius: 8,
                       marginRight: 8,
                       backgroundColor: newSubjectId === null ? colors.button : colors.card,
                       borderWidth: 1,
@@ -526,7 +542,7 @@ export default function Deadlines() {
                       style={{
                         paddingVertical: 8,
                         paddingHorizontal: 14,
-                        borderRadius: 100,
+                        borderRadius: 8,
                         marginRight: 8,
                         backgroundColor: newSubjectId === s.id ? colors.button : colors.card,
                         borderWidth: 1,
@@ -561,7 +577,7 @@ export default function Deadlines() {
                   backgroundColor: colors.button,
                   paddingVertical: 10,
                   paddingHorizontal: 20,
-                  borderRadius: 100,
+                  borderRadius: 10,
                 }}
               >
                 <Text style={{ color: colors.buttonText, fontWeight: "700" }}>Save</Text>
@@ -570,6 +586,6 @@ export default function Deadlines() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }

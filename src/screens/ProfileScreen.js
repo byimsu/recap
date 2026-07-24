@@ -12,11 +12,12 @@ import {
   StyleSheet,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { ArrowLeft, Camera, Cloud, ChevronRight, Mail, CheckCircle2, AlertCircle, Info, Shield, FileText, LogOut, Trash2, AlertTriangle } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../context/AuthContext';
 import { getProfile, updateProfile, deleteAccount } from '../services/profileService';
 import { uploadProfileImage, saveGuestProfileImage } from '../services/storageService';
@@ -52,7 +53,7 @@ function Row({ icon, label, sublabel, right, onPress, disabled, colors }) {
         disabled && { opacity: 0.6 },
       ]}
     >
-      <View style={[styles.rowIcon, { backgroundColor: colors.bg, borderColor: colors.border }]}>
+      <View style={[styles.rowIcon, { backgroundColor: colors.accentSoft }]}>
         {icon}
       </View>
       <View style={styles.rowContent}>
@@ -222,8 +223,8 @@ export default function ProfileScreen() {
   const uploading = uploadProgress !== null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.bg }}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? 'dark' : 'light'} />
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar style={colors.bg === '#FAFAFA' ? 'dark' : 'light'} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
@@ -233,7 +234,7 @@ export default function ProfileScreen() {
           onPress={() => navigation.goBack()}
           style={[styles.backButton, { borderColor: colors.border }]}
         >
-          <Ionicons name="arrow-back" size={20} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} />
         </TouchableOpacity>
 
         <Text style={[styles.screenTitle, { color: colors.text }]}>Profile</Text>
@@ -266,7 +267,7 @@ export default function ProfileScreen() {
                 </View>
               ) : (
                 <View style={[styles.cameraButton, { backgroundColor: colors.button }]}>
-                  <Feather name="camera" size={12} color={colors.buttonText} />
+                  <Camera size={12} color={colors.buttonText} />
                 </View>
               )}
             </View>
@@ -289,11 +290,11 @@ export default function ProfileScreen() {
             onPress={() => navigation.navigate('Register')}
             activeOpacity={0.8}
           >
-            <Feather name="cloud" size={16} color={colors.text} />
+            <Cloud size={16} color={colors.text} />
             <Text style={[styles.guestCtaText, { color: colors.text }]}>
               Create an account to sync your data to the cloud
             </Text>
-            <Ionicons name="chevron-forward" size={16} color={colors.subtext} />
+            <ChevronRight size={16} color={colors.subtext} />
           </TouchableOpacity>
         )}
 
@@ -338,18 +339,14 @@ export default function ProfileScreen() {
             <SectionLabel label="ACCOUNT" colors={colors} />
             <Row
               colors={colors}
-              icon={<Feather name="mail" size={16} color={colors.text} />}
+              icon={<Mail size={16} color={colors.text} />}
               label={profile?.email || '—'}
               sublabel="Email address"
             />
             <Row
               colors={colors}
               icon={
-                <Feather
-                  name={emailVerified ? 'check-circle' : 'alert-circle'}
-                  size={16}
-                  color={emailVerified ? colors.success : colors.danger}
-                />
+                  emailVerified ? <CheckCircle2 size={16} color={colors.success} /> : <AlertCircle size={16} color={colors.danger} />
               }
               label={emailVerified ? 'Email Verified' : 'Email Not Verified'}
               sublabel={emailVerified ? null : 'Check your inbox for a verification link'}
@@ -361,44 +358,44 @@ export default function ProfileScreen() {
         <SectionLabel label="ABOUT" colors={colors} />
         <Row
           colors={colors}
-          icon={<Feather name="info" size={16} color={colors.text} />}
+          icon={<Info size={16} color={colors.text} />}
           label="App Version"
           sublabel={APP_VERSION}
         />
         <Row
           colors={colors}
-          icon={<Feather name="shield" size={16} color={colors.text} />}
+          icon={<Shield size={16} color={colors.text} />}
           label="Privacy Policy"
           onPress={handlePrivacyPolicy}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={18} color={colors.subtext} />}
         />
         <Row
           colors={colors}
-          icon={<Feather name="file-text" size={16} color={colors.text} />}
+          icon={<FileText size={16} color={colors.text} />}
           label="Terms of Service"
           onPress={handleTerms}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={18} color={colors.subtext} />}
         />
 
         {/* Session */}
         <SectionLabel label="SESSION" colors={colors} />
         <Row
           colors={colors}
-          icon={<Feather name="log-out" size={16} color={colors.danger} />}
+          icon={<LogOut size={16} color={colors.danger} />}
           label="Sign Out"
           onPress={handleLogout}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={18} color={colors.subtext} />}
         />
 
         {/* Danger Zone */}
         <SectionLabel label="DANGER ZONE" colors={colors} />
         <Row
           colors={colors}
-          icon={<Feather name="trash-2" size={16} color={colors.danger} />}
+          icon={<Trash2 size={16} color={colors.danger} />}
           label="Delete Account"
           sublabel="Permanently delete your account and all data"
           onPress={() => setShowDeleteModal(true)}
-          right={<Ionicons name="chevron-forward" size={18} color={colors.subtext} />}
+          right={<ChevronRight size={18} color={colors.subtext} />}
         />
 
         <View style={{ height: 32 }} />
@@ -416,7 +413,7 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <View style={styles.modalIconBadge}>
-              <Feather name="alert-triangle" size={24} color={colors.danger} />
+              <AlertTriangle size={24} color={colors.danger} />
             </View>
 
             <Text style={[styles.modalTitle, { color: colors.text }]}>Delete Account?</Text>
@@ -502,14 +499,14 @@ export default function ProfileScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: '6%',
-    paddingTop: '16%',
+    paddingTop: 16,
     paddingBottom: '6%',
   },
   centered: {
@@ -518,16 +515,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 42,
+    height: 42,
+    borderRadius: 10,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4,
   },
   screenTitle: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: '700',
     marginTop: 20,
     marginBottom: 28,
@@ -589,7 +586,7 @@ const styles = StyleSheet.create({
   },
   badge: {
     borderWidth: 1,
-    borderRadius: 100,
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 4,
   },
@@ -601,7 +598,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     gap: 12,
@@ -621,8 +618,8 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 12,
   },
   inputLabel: {
@@ -633,9 +630,9 @@ const styles = StyleSheet.create({
   input: {
     fontSize: 15.5,
     borderWidth: 1,
-    borderRadius: 100,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    height: 48,
+    height: 50,
   },
   charCount: {
     fontSize: 11,
@@ -644,8 +641,8 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   saveButton: {
-    height: 48,
-    borderRadius: 100,
+    height: 50,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -658,15 +655,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 16,
-    borderRadius: 16,
+    borderRadius: 12,
     borderWidth: 1,
     marginBottom: 10,
   },
   rowIcon: {
     width: 36,
     height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -691,20 +687,15 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    borderRadius: 24,
+    borderRadius: 12,
     borderWidth: 1,
     padding: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
   },
   modalIconBadge: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: 12,
     backgroundColor: '#fee2e2',
     justifyContent: 'center',
     alignItems: 'center',
@@ -746,7 +737,7 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     height: 46,
-    borderRadius: 100,
+    borderRadius: 12,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -758,7 +749,7 @@ const styles = StyleSheet.create({
   modalDeleteBtn: {
     flex: 1,
     height: 46,
-    borderRadius: 100,
+    borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },

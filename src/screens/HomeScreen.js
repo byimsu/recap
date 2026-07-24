@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { StatusBar } from "expo-status-bar";
 import {
   Text,
@@ -13,40 +13,72 @@ import {
   KeyboardAvoidingView,
   TextInput,
 } from "react-native";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Feather from "@expo/vector-icons/Feather";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import {
+  FileText,
+  MoreVertical,
+  Calendar,
+  FolderOpen,
+  Folder,
+  ArrowRight,
+  UploadCloud,
+  Plus,
+  BookOpen,
+  Library,
+  Settings as SettingsIcon,
+  Trash2,
+  LogOut,
+  Clock,
+  Bell,
+} from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import * as DocumentPicker from 'expo-document-picker';
 import { saveNote, getAllNotes, openNote } from '../data/notesData';
 import { loadSubjectsWithNoteCounts, createSubject } from '../data/subjectsData';
 import { getAllDeadlines, upcomingDeadlines, daysUntilLabel, DEADLINE_TYPE_META } from '../data/deadlinesData';
+import { getLocalStudyData, formatLocalDate } from '../storage/studyStorage';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const RecentNoteItem = React.memo(({ note, subjectDisplay, colors, onPress }) => (
-  <TouchableOpacity
-    style={[styles.recentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-    onPress={() => onPress(note.uri)}
-    activeOpacity={0.7}
-  >
-    <View style={[styles.recentIconBadge, { backgroundColor: colors.bg, borderColor: colors.border }]}>
-      <Ionicons name="document-text" size={18} color={colors.text} />
-    </View>
+function getGreetingText() {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) {
+    return { line1: "Good", line2: "morning" };
+  } else if (hour >= 12 && hour < 17) {
+    return { line1: "Good", line2: "afternoon" };
+  } else {
+    return { line1: "Good", line2: "evening" };
+  }
+}
 
-    <View style={styles.recentTextContainer}>
-      <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
-        {note.name}
-      </Text>
-      <Text style={[styles.recentMeta, { color: colors.subtext }]}>
-        {subjectDisplay} • {new Date(note.createdAt).toLocaleDateString()}
-      </Text>
-    </View>
+const RecentNoteItem = React.memo(({ note, subjectDisplay, colors, onPress }) => {
+  const handlePress = React.useCallback(() => {
+    onPress(note.uri);
+  }, [note.uri, onPress]);
 
-    <View style={[styles.recentOpenBadge, { backgroundColor: colors.bg }]}>
-      <Feather name="external-link" size={14} color={colors.subtext} />
-    </View>
-  </TouchableOpacity>
-));
+  return (
+    <TouchableOpacity
+      style={[styles.recentCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+      onPress={handlePress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.recentIconBadge, { backgroundColor: colors.bg, borderColor: colors.border, borderWidth: 1 }]}>
+        <FileText size={17} color={colors.subtext} />
+      </View>
+
+      <View style={styles.recentTextContainer}>
+        <Text style={[styles.recentTitle, { color: colors.text }]} numberOfLines={1}>
+          {note.name}
+        </Text>
+        <Text style={[styles.recentMeta, { color: colors.subtext }]}>
+          {subjectDisplay} • {new Date(note.createdAt).toLocaleDateString()}
+        </Text>
+      </View>
+
+      <ArrowRight size={14} color={colors.subtext} />
+    </TouchableOpacity>
+  );
+});
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -54,12 +86,16 @@ export default function HomeScreen() {
   const [subjects, setSubjects] = useState([]);
   const [recentNotes, setRecentNotes] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
+  const [todayMinutes, setTodayMinutes] = useState(0);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // --- Inline Subject Creation States ---
   const [isCreatingNewSubject, setIsCreatingNewSubject] = useState(false);
   const [newSubjectName, setNewSubjectName] = useState("");
+  const { logout } = useAuth();
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+
+  const greeting = useMemo(() => getGreetingText(), []);
 
   useFocusEffect(
     useCallback(() => {
@@ -74,6 +110,10 @@ export default function HomeScreen() {
 
           const allDeadlines = await getAllDeadlines();
           setUpcoming(upcomingDeadlines(allDeadlines, 2));
+
+          const studyData = await getLocalStudyData();
+          const todayStr = formatLocalDate(new Date());
+          setTodayMinutes(studyData[todayStr] || 0);
         } catch (error) {
           console.error("Error loading data:", error);
         }
@@ -164,175 +204,174 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
-      <StatusBar style={colors.bg === '#FFFFFF' ? "dark" : "light"} />
+    <SafeAreaView edges={['top']} style={[styles.container, { backgroundColor: colors.bg }]}>
+      <StatusBar style={colors.bg === '#F5F4F0' || colors.bg === '#F1F2ED' || colors.bg === '#FAFAFA' ? "dark" : "light"} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Sleek Minimal Top Navigation Bar */}
-        <View style={styles.topBar}>
-          <TouchableOpacity
-            onPress={() => navigation.openDrawer()}
-            style={[styles.headerIconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="menu-outline" size={22} color={colors.text} />
-          </TouchableOpacity>
-
-          <View style={styles.brandPill}>
-            <Text style={[styles.brandText, { color: colors.text }]}>Recap</Text>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => navigation.navigate("UserProgress")}
-            style={[styles.headerIconBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="stats-chart-outline" size={20} color={colors.text} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Minimal Greeting Header */}
-        <View style={styles.greetingSection}>
-          <Text style={[styles.greetingSubtitle, { color: colors.subtext }]}>Welcome back</Text>
-          <Text style={[styles.greetingTitle, { color: colors.text }]}>Ready to Study?</Text>
-        </View>
-
-        {/* Immersive Hero Upload Card */}
-        <View style={[styles.heroCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.heroHeaderRow}>
-            <View style={[styles.heroIconBadge, { backgroundColor: colors.button }]}>
-              <Feather name="upload-cloud" size={22} color={colors.buttonText} />
+        {/* Top Header Area */}
+        <View style={styles.headerArea}>
+          <View style={styles.topBar}>
+            <View style={styles.greetingHeaderContainer}>
+              <Text style={[styles.greetingLine1, { color: colors.text }]}>{greeting.line1}</Text>
+              <Text style={[styles.greetingLine2, { color: colors.subtext }]}>{greeting.line2}</Text>
+              <Text style={[styles.greetingSub, { color: colors.subtext }]}>Ready to study?</Text>
             </View>
-            <View style={[styles.formatTag, { borderColor: colors.border }]}>
-              <Text style={[styles.formatTagText, { color: colors.subtext }]}>PDF • DOCX • TXT</Text>
+
+            <View style={styles.headerActionsRow}>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("StudySchedule")}
+                style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                activeOpacity={0.75}
+              >
+                <Bell size={16} color={colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => navigation.navigate("Deadlines")}
+                style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                activeOpacity={0.75}
+              >
+                <Calendar size={16} color={colors.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setIsMenuVisible(true)}
+                style={[styles.headerPillBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+                activeOpacity={0.75}
+              >
+                <MoreVertical size={16} color={colors.text} />
+              </TouchableOpacity>
             </View>
           </View>
-
-          <Text style={[styles.heroTitle, { color: colors.text }]}>Import Study Notes</Text>
-          <Text style={[styles.heroSubtext, { color: colors.subtext }]}>
-            Upload documents to organize by subject & generate review cards.
-          </Text>
-
-          <TouchableOpacity
-            onPress={handleUpload}
-            style={[styles.heroPrimaryBtn, { backgroundColor: colors.button }]}
-            activeOpacity={0.85}
-          >
-            <Feather name="plus" size={18} color={colors.buttonText} />
-            <Text style={[styles.heroBtnText, { color: colors.buttonText }]}>Upload File</Text>
-          </TouchableOpacity>
         </View>
 
-        {/* Upcoming Deadlines Widget */}
-        {upcoming.length > 0 && (
-          <TouchableOpacity
-            style={[styles.deadlineWidget, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => navigation.navigate("Deadlines")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.widgetHeader}>
-              <View style={styles.widgetTitleRow}>
-                <Ionicons name="calendar-outline" size={16} color={colors.subtext} />
-                <Text style={[styles.widgetTitle, { color: colors.text }]}>Upcoming Deadlines</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.subtext} />
-            </View>
-
-            {upcoming.map((d, index) => {
-              const meta = DEADLINE_TYPE_META[d.type] || { color: colors.customFallback };
-              return (
-                <View
-                  key={d.id}
-                  style={[
-                    styles.deadlineRow,
-                    index > 0 && { borderTopWidth: 1, borderTopColor: colors.border }
-                  ]}
-                >
-                  <View style={[styles.deadlineDot, { backgroundColor: meta.color }]} />
-                  <Text style={[styles.deadlineTitle, { color: colors.text }]} numberOfLines={1}>{d.title}</Text>
-                  <Text style={[styles.deadlineBadge, { color: colors.subtext, backgroundColor: colors.bg }]}>
-                    {daysUntilLabel(d.date)}
-                  </Text>
+        {/* Layered Card Sheet Container */}
+        <View style={[styles.layeredSheet, { backgroundColor: colors.card }]}>
+          {/* Dashboard Main Overview Section */}
+          <View style={styles.dashboardSection}>
+            <View style={styles.dashboardHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.dashboardTitle, { color: colors.text }]}>Study Overview</Text>
+                <View style={[styles.formatTag, { backgroundColor: colors.bg }]}>
+                  <Text style={[styles.formatTagText, { color: colors.subtext }]}>PDF • DOCX • TXT</Text>
                 </View>
-              );
-            })}
-          </TouchableOpacity>
-        )}
-
-        {/* Minimal Navigation Grid */}
-        <View style={styles.gridSectionHeader}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Quick Access</Text>
-        </View>
-
-        <View style={styles.gridRow}>
-          <TouchableOpacity
-            style={[styles.navCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => navigation.navigate("Notes")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.navCardTop}>
-              <View style={[styles.navIconBadge, { backgroundColor: colors.button }]}>
-                <Feather name="book-open" size={18} color={colors.buttonText} />
               </View>
-              <Ionicons name="arrow-forward" size={16} color={colors.subtext} />
-            </View>
-            <Text style={[styles.navCardTitle, { color: colors.text }]}>Notes</Text>
-            <Text style={[styles.navCardSub, { color: colors.subtext }]}>Organized subjects</Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.navCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => navigation.navigate("Flashcards")}
-            activeOpacity={0.8}
-          >
-            <View style={styles.navCardTop}>
-              <View style={[styles.navIconBadge, { backgroundColor: colors.button }]}>
-                <MaterialCommunityIcons name="cards-outline" size={20} color={colors.buttonText} />
+              <TouchableOpacity
+                onPress={handleUpload}
+                style={[styles.importBtn, { backgroundColor: colors.accent }]}
+                activeOpacity={0.85}
+              >
+                <UploadCloud size={12} color="#FFFFFF" />
+                <Text style={styles.importBtnText}>Import Note</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Standalone Statistic Cards Grid */}
+            <View style={styles.metricCardsGrid}>
+              <TouchableOpacity
+                style={[styles.metricCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => navigation.navigate("ProgressTab")}
+                activeOpacity={0.8}
+              >
+                <View style={styles.metricCardTop}>
+                  <Text style={[styles.metricLabel, { color: colors.subtext }]} numberOfLines={2}>
+                    Study Time Today
+                  </Text>
+                  <View style={[styles.metricIconBadge, { backgroundColor: colors.card }]}>
+                    <Clock size={14} color={colors.subtext} />
+                  </View>
+                </View>
+                <Text style={[styles.metricValue, { color: colors.text }]}>
+                  {todayMinutes > 0 ? `${todayMinutes}m` : '0m'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.metricCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+                onPress={() => navigation.navigate("Deadlines")}
+                activeOpacity={0.8}
+              >
+                <View style={styles.metricCardTop}>
+                  <Text style={[styles.metricLabel, { color: colors.subtext }]} numberOfLines={2}>
+                    Upcoming Deadlines
+                  </Text>
+                  <View style={[styles.metricIconBadge, { backgroundColor: colors.card }]}>
+                    <Calendar size={14} color={colors.subtext} />
+                  </View>
+                </View>
+                <Text style={[styles.metricValue, { color: colors.text }]}>
+                  {upcoming.length > 0 ? `${upcoming.length} Due` : '0 Due'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Quick Access Action Chips */}
+          <View style={styles.chipsRow}>
+            <TouchableOpacity
+              style={[styles.actionChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={() => navigation.navigate("Notes")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.chipIconBadge, { backgroundColor: colors.card }]}>
+                <BookOpen size={16} color={colors.text} />
               </View>
-              <Ionicons name="arrow-forward" size={16} color={colors.subtext} />
-            </View>
-            <Text style={[styles.navCardTitle, { color: colors.text }]}>Flashcards</Text>
-            <Text style={[styles.navCardSub, { color: colors.subtext }]}>Spaced repetition</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Recent Uploads Section */}
-        <View style={styles.recentSectionHeader}>
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Recent Notes</Text>
-          {recentNotes.length > 0 && (
-            <TouchableOpacity onPress={() => navigation.navigate("Notes")}>
-              <Text style={[styles.seeAllText, { color: colors.subtext }]}>See All</Text>
+              <Text style={[styles.chipTitle, { color: colors.text }]}>Notes</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionChip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+              onPress={() => navigation.navigate("Flashcards")}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.chipIconBadge, { backgroundColor: colors.card }]}>
+                <Library size={16} color={colors.text} />
+              </View>
+              <Text style={[styles.chipTitle, { color: colors.text }]}>Flashcards</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Recent Notes Section */}
+          <View style={styles.recentSectionHeader}>
+            <Text style={[styles.sectionHeading, { color: colors.text }]}>Recent Notes</Text>
+            {recentNotes.length > 0 && (
+              <TouchableOpacity onPress={() => navigation.navigate("Notes")}>
+                <Text style={[styles.seeAllText, { color: colors.accent }]}>See All</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {recentNotes.length === 0 ? (
+            <View style={[styles.emptyContainer, { backgroundColor: colors.surfaceSubtle, borderColor: colors.border }]}>
+              <FileText size={26} color={colors.subtext} />
+              <Text style={[styles.emptyTitle, { color: colors.text }]}>No notes yet</Text>
+              <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+                Import your first study material to start building your library.
+              </Text>
+            </View>
+          ) : (
+            (() => {
+              const subjectMap = {};
+              subjects.forEach(s => { subjectMap[s.id] = s.name; });
+              return recentNotes.map((note) => {
+                const subjectDisplay = subjectMap[note.subjectId] || "Uncategorized";
+                return (
+                  <RecentNoteItem
+                    key={note.id}
+                    note={note}
+                    subjectDisplay={subjectDisplay}
+                    colors={colors}
+                    onPress={handleOpenNote}
+                  />
+                );
+              });
+            })()
           )}
         </View>
-
-        {recentNotes.length === 0 ? (
-          <View style={[styles.emptyContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Ionicons name="document-text-outline" size={32} color={colors.subtext} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>No notes uploaded yet</Text>
-            <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
-              Tap the upload button above to add your first study material.
-            </Text>
-          </View>
-        ) : (
-          recentNotes.map((note) => {
-            const subjectMatch = subjects.find(s => s.id === note.subjectId);
-            const subjectDisplay = subjectMatch ? subjectMatch.name : "Uncategorized";
-
-            return (
-              <RecentNoteItem
-                key={note.id}
-                note={note}
-                subjectDisplay={subjectDisplay}
-                colors={colors}
-                onPress={handleOpenNote}
-              />
-            );
-          })
-        )}
       </ScrollView>
 
       {/* Save Note Subject Modal */}
@@ -341,7 +380,7 @@ export default function HomeScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
-          <View style={[styles.modalCard, { backgroundColor: colors.bg }]}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             {isCreatingNewSubject ? (
               <>
                 <Text style={[styles.modalHeaderTitle, { color: colors.text }]}>New Subject Folder</Text>
@@ -356,7 +395,7 @@ export default function HomeScreen() {
                   placeholderTextColor={colors.subtext}
                   style={[
                     styles.newSubjectInput,
-                    { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }
+                    { backgroundColor: colors.bg, borderColor: colors.border, color: colors.text }
                   ]}
                   autoFocus
                 />
@@ -374,9 +413,9 @@ export default function HomeScreen() {
 
                   <TouchableOpacity
                     onPress={handleCreateAndSaveSubject}
-                    style={[styles.modalPrimaryBtn, { backgroundColor: colors.primary }]}
+                    style={[styles.modalPrimaryBtn, { backgroundColor: colors.accent }]}
                   >
-                    <Text style={[styles.modalPrimaryBtnText, { color: colors.buttonText }]}>Create & Save</Text>
+                    <Text style={styles.modalPrimaryBtnText}>Create & Save</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -388,11 +427,11 @@ export default function HomeScreen() {
                 </Text>
 
                 <TouchableOpacity
-                  style={[styles.createSubjectItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  style={[styles.createSubjectItem, { backgroundColor: colors.accentSoft, borderColor: colors.border }]}
                   onPress={() => setIsCreatingNewSubject(true)}
                 >
-                  <Ionicons name="folder-open" size={18} color={colors.primary} />
-                  <Text style={[styles.createSubjectText, { color: colors.primary }]}>+ Create New Subject</Text>
+                  <FolderOpen size={17} color={colors.accent} />
+                  <Text style={[styles.createSubjectText, { color: colors.accent }]}>+ Create New Subject</Text>
                 </TouchableOpacity>
 
                 <ScrollView style={styles.subjectList} showsVerticalScrollIndicator={false}>
@@ -402,7 +441,7 @@ export default function HomeScreen() {
                       style={[styles.subjectItem, { borderBottomColor: colors.border }]}
                       onPress={() => saveNoteToSubject(subject.id)}
                     >
-                      <Ionicons name="folder-outline" size={18} color={colors.text} />
+                      <Folder size={17} color={colors.subtext} />
                       <Text style={[styles.subjectItemText, { color: colors.text }]}>{subject.name}</Text>
                     </TouchableOpacity>
                   ))}
@@ -412,7 +451,7 @@ export default function HomeScreen() {
                   style={[styles.subjectItem, { borderBottomColor: colors.border }]}
                   onPress={() => saveNoteToSubject(null)}
                 >
-                  <Ionicons name="document-text-outline" size={18} color={colors.subtext} />
+                  <FileText size={17} color={colors.subtext} />
                   <Text style={[styles.subjectItemText, { color: colors.subtext }]}>Save without subject</Text>
                 </TouchableOpacity>
 
@@ -422,359 +461,384 @@ export default function HomeScreen() {
                     setIsCreatingNewSubject(false);
                     setNewSubjectName("");
                   }}
-                  style={[styles.modalCancelBtn, { backgroundColor: colors.button }]}
+                  style={[styles.modalCancelBtn, { borderColor: colors.border }]}
                 >
-                  <Text style={[styles.modalCancelBtnText, { color: colors.buttonText }]}>Cancel</Text>
+                  <Text style={[styles.modalCancelBtnText, { color: colors.subtext }]}>Cancel</Text>
                 </TouchableOpacity>
               </>
             )}
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </View>
+
+      {/* Dropdown Menu Modal */}
+      <Modal visible={isMenuVisible} transparent animationType="fade">
+        <TouchableOpacity
+          style={styles.dropdownOverlay}
+          activeOpacity={1}
+          onPress={() => setIsMenuVisible(false)}
+        >
+          <View style={[styles.dropdownMenu, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+              onPress={() => {
+                setIsMenuVisible(false);
+                navigation.navigate('Settings');
+              }}
+            >
+              <SettingsIcon size={16} color={colors.text} />
+              <Text style={[styles.dropdownItemText, { color: colors.text }]}>Settings</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderBottomColor: colors.border }]}
+              onPress={() => {
+                setIsMenuVisible(false);
+                navigation.navigate('Trash');
+              }}
+            >
+              <Trash2 size={16} color={colors.text} />
+              <Text style={[styles.dropdownItemText, { color: colors.text }]}>Trash</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.dropdownItem, { borderBottomColor: 'transparent' }]}
+              onPress={() => {
+                setIsMenuVisible(false);
+                Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+                  { text: "Cancel", style: "cancel" },
+                  { text: "Sign Out", style: "destructive", onPress: logout }
+                ]);
+              }}
+            >
+              <LogOut size={16} color={colors.danger} />
+              <Text style={[styles.dropdownItemText, { color: colors.danger }]}>Sign Out</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  container: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: "5%",
-    paddingTop: Platform.OS === 'ios' ? "14%" : "12%",
-    paddingBottom: 40,
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  headerArea: {
+    paddingHorizontal: "6%",
+    paddingTop: 12,
+    paddingBottom: 36,
+  },
+  layeredSheet: {
+    borderTopLeftRadius: 42,
+    borderTopRightRadius: 42,
+    paddingHorizontal: "6%",
+    paddingTop: 28,
+    paddingBottom: 120,
+    minHeight: "100%",
   },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 20,
+    alignItems: "flex-start",
+    marginTop: 8,
   },
-  headerIconBtn: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  brandPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-  },
-  brandText: {
-    fontSize: 18,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-  },
-  greetingSection: {
-    marginBottom: 20,
-  },
-  greetingSubtitle: {
-    fontSize: 13,
-    fontWeight: "600",
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-  },
-  greetingTitle: {
-    fontSize: 26,
-    fontWeight: "800",
-    letterSpacing: -0.5,
-    marginTop: 2,
-  },
-  heroCard: {
-    borderWidth: 1,
-    borderRadius: 22,
-    padding: 20,
-    marginBottom: 20,
-  },
-  heroHeaderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  heroIconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  formatTag: {
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 100,
-  },
-  formatTagText: {
-    fontSize: 11,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-  },
-  heroTitle: {
-    fontSize: 20,
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
-  heroSubtext: {
-    fontSize: 13.5,
-    lineHeight: 20,
-    marginTop: 6,
-    marginBottom: 18,
-  },
-  heroPrimaryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 14,
-    borderRadius: 100,
-  },
-  heroBtnText: {
-    fontWeight: "700",
-    fontSize: 15,
-    marginLeft: 8,
-  },
-  deadlineWidget: {
-    borderWidth: 1,
-    borderRadius: 18,
-    padding: 16,
-    marginBottom: 20,
-  },
-  widgetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  widgetTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  widgetTitle: {
-    fontSize: 14,
-    fontWeight: "700",
-    marginLeft: 8,
-  },
-  deadlineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-  },
-  deadlineDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 10,
-  },
-  deadlineTitle: {
+  greetingHeaderContainer: {
     flex: 1,
+  },
+  greetingLine1: {
+    fontSize: 32,
+    fontWeight: "700",
+    letterSpacing: -0.8,
+    lineHeight: 36,
+  },
+  greetingLine2: {
+    fontSize: 32,
+    fontWeight: "400",
+    letterSpacing: -0.8,
+    lineHeight: 36,
+  },
+  greetingSub: {
     fontSize: 14,
     fontWeight: "500",
+    marginTop: 6,
   },
-  deadlineBadge: {
-    fontSize: 11.5,
-    fontWeight: "700",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    overflow: "hidden",
-  },
-  gridSectionHeader: {
-    marginBottom: 12,
-  },
-  sectionHeading: {
-    fontSize: 16,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
-  gridRow: {
+  headerActionsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 24,
-  },
-  navCard: {
-    width: "48%",
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-  },
-  navCardTop: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 14,
+    gap: 8,
   },
-  navIconBadge: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  headerPillBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  navCardTitle: {
-    fontSize: 15,
-    fontWeight: "700",
+  headerDarkPillBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  navCardSub: {
-    fontSize: 12,
-    marginTop: 2,
+  dashboardSection: {
+    marginBottom: 24,
+  },
+  dashboardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
+  dashboardTitle: {
+    fontSize: 13.5,
+    fontWeight: "600",
+    letterSpacing: -0.1,
+  },
+  formatTag: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginTop: 6,
+  },
+  formatTagText: {
+    fontSize: 10.5,
+    fontWeight: "700",
+    letterSpacing: 0.3,
+  },
+  importBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 9,
+    height: 28,
+    borderRadius: 7,
+  },
+  importBtnText: {
+    fontSize: 11.5,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginLeft: 4,
+  },
+  metricCardsGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  metricCard: {
+    flex: 1,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    justifyContent: "space-between",
+    minHeight: 104,
+  },
+  metricCardTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  metricLabel: {
+    flex: 1,
+    fontSize: 11.5,
+    fontWeight: "500",
+    lineHeight: 15,
+    paddingRight: 4,
+  },
+  metricIconBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  metricValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    marginTop: 12,
+  },
+  chipsRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 12,
+    marginBottom: 24,
+  },
+  actionChip: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    height: 54,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  chipIconBadge: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+  chipTitle: {
+    fontSize: 14,
+    fontWeight: "700",
   },
   recentSectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 12,
+    marginBottom: 14,
   },
-  seeAllText: {
-    fontSize: 13,
-    fontWeight: "600",
-  },
+  seeAllText: { fontSize: 13, fontWeight: "600" },
   emptyContainer: {
     borderWidth: 1,
-    borderRadius: 18,
-    padding: 28,
+    borderRadius: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
     alignItems: "center",
-    justifyContent: "center",
   },
   emptyTitle: {
-    fontSize: 15,
+    fontSize: 14.5,
     fontWeight: "700",
-    marginTop: 10,
+    marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 12.5,
     textAlign: "center",
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 17,
+  },
+  emptyCtaBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    height: 38,
+    borderRadius: 10,
+    marginTop: 18,
+  },
+  emptyCtaText: {
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginLeft: 6,
   },
   recentCard: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
+    padding: 16,
     borderRadius: 16,
     borderWidth: 1,
     marginBottom: 10,
   },
   recentIconBadge: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: 12,
-    borderWidth: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  recentTextContainer: {
-    flex: 1,
-    marginLeft: 12,
-    marginRight: 10,
-  },
-  recentTitle: {
-    fontSize: 14.5,
-    fontWeight: "600",
-  },
-  recentMeta: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  recentOpenBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+  recentTextContainer: { flex: 1, marginLeft: 14, marginRight: 10 },
+  recentTitle: { fontSize: 15, fontWeight: "700" },
+  recentMeta: { fontSize: 12.5, marginTop: 3 },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   modalCard: {
     width: '100%',
-    borderRadius: 22,
-    padding: 22,
+    borderRadius: 12,
+    padding: 24,
+    borderWidth: 1,
   },
-  modalHeaderTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-  },
-  modalSubHeader: {
-    fontSize: 13,
-    marginTop: 4,
-    marginBottom: 16,
-  },
+  modalHeaderTitle: { fontSize: 18, fontWeight: '700' },
+  modalSubHeader: { fontSize: 13, marginTop: 4, marginBottom: 18 },
   createSubjectItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
     borderWidth: 1,
-    marginBottom: 10,
+    marginBottom: 12,
   },
-  createSubjectText: {
-    fontSize: 14.5,
-    fontWeight: '700',
-    marginLeft: 10,
-  },
+  createSubjectText: { fontSize: 14, fontWeight: '700', marginLeft: 10 },
   newSubjectInput: {
     borderWidth: 1,
     padding: 14,
-    borderRadius: 12,
+    borderRadius: 10,
     fontSize: 15,
     marginBottom: 16,
     marginTop: 8,
   },
-  modalBtnRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 8,
-  },
+  modalBtnRow: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
   modalSecondaryBtn: {
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 18,
-    borderRadius: 100,
+    borderRadius: 10,
     borderWidth: 1,
     marginRight: 10,
   },
-  modalSecondaryBtnText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
+  modalSecondaryBtnText: { fontWeight: '600', fontSize: 14 },
   modalPrimaryBtn: {
-    paddingVertical: 12,
+    paddingVertical: 11,
     paddingHorizontal: 20,
-    borderRadius: 100,
+    borderRadius: 10,
   },
-  modalPrimaryBtnText: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  subjectList: {
-    maxHeight: 220,
-    marginBottom: 8,
-  },
+  modalPrimaryBtnText: { fontWeight: '700', fontSize: 14, color: '#FFFFFF' },
+  subjectList: { maxHeight: 220, marginBottom: 8 },
   subjectItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
   },
-  subjectItemText: {
-    fontSize: 15,
-    marginLeft: 12,
-    fontWeight: '500',
-  },
+  subjectItemText: { fontSize: 15, marginLeft: 12, fontWeight: '500' },
   modalCancelBtn: {
-    paddingVertical: 14,
-    borderRadius: 100,
+    paddingVertical: 13,
+    borderRadius: 10,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 14,
+    borderWidth: 1,
   },
-  modalCancelBtnText: {
-    fontWeight: '700',
-    fontSize: 15,
+  modalCancelBtnText: { fontWeight: '600', fontSize: 14 },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 90 : 80,
+    right: '6%',
+    width: 180,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+  },
+  dropdownItemText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 12,
   },
 });

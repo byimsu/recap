@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Text, View, TouchableOpacity, Switch, Alert, Platform, Modal } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import Feather from "@expo/vector-icons/Feather";
+import { ArrowLeft, Bell, Clock } from 'lucide-react-native';
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation } from "@react-navigation/native";
 import { useTheme } from '../context/ThemeContext';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   getStudyReminder,
   requestStudyReminderPermission,
@@ -19,7 +19,7 @@ export default function StudySchedule() {
   const [enabled, setEnabled] = useState(false);
   const [reminderTime, setReminderTime] = useState(() => {
     const d = new Date();
-    d.setHours(19, 0, 0, 0); // Default 7:00 PM
+    d.setHours(19, 0, 0, 0);
     return d;
   });
   const [showPicker, setShowPicker] = useState(false);
@@ -110,46 +110,48 @@ export default function StudySchedule() {
   };
 
   return (
-    <View style={{ backgroundColor: colors.bg, flex: 1 }}>
-      <StatusBar style={colors.bg === "#FFFFFF" ? "dark" : "light"} />
-      <View style={{ paddingHorizontal: "6%", paddingTop: "16%" }}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.bg, flex: 1 }}>
+      <StatusBar style={colors.bg === "#FAFAFA" ? "dark" : "light"} />
+      <View style={{ paddingHorizontal: "6%", paddingTop: 16 }}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={{
-            width: 46,
-            height: 46,
-            borderRadius: 23,
+            width: 42,
+            height: 42,
+            borderRadius: 10,
             borderWidth: 1,
             borderColor: colors.border,
+            backgroundColor: colors.card,
             justifyContent: "center",
             alignItems: "center",
           }}
         >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
+          <ArrowLeft size={20} color={colors.text} />
         </TouchableOpacity>
 
         <Text
           style={{
             color: colors.text,
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: "700",
-            marginTop: 24,
+            marginTop: 28,
             letterSpacing: -0.5,
           }}
         >
           Study Schedule
         </Text>
-        <Text style={{ color: colors.subtext, fontSize: 14, marginTop: 6, marginBottom: 24 }}>
+        <Text style={{ color: colors.subtext, fontSize: 13.5, marginTop: 6, marginBottom: 28 }}>
           Set a daily reminder to keep your streak alive.
         </Text>
 
+        {/* Reminder Toggle Row */}
         <View
           style={{
             flexDirection: "row",
             alignItems: "center",
-            padding: 16,
+            padding: 18,
             backgroundColor: colors.card,
-            borderRadius: 16,
+            borderRadius: 12,
             borderWidth: 1,
             borderColor: colors.border,
           }}
@@ -158,15 +160,13 @@ export default function StudySchedule() {
             style={{
               width: 36,
               height: 36,
-              borderRadius: 18,
-              backgroundColor: colors.bg,
-              borderWidth: 1,
-              borderColor: colors.border,
+              borderRadius: 8,
+              backgroundColor: colors.accentSoft,
               justifyContent: "center",
               alignItems: "center",
             }}
           >
-            <Feather name="bell" size={16} color={colors.text} />
+            <Bell size={16} color={colors.accent} />
           </View>
           <View style={{ flex: 1, marginLeft: 14 }}>
             <Text style={{ color: colors.text, fontSize: 15, fontWeight: "600" }}>
@@ -180,7 +180,7 @@ export default function StudySchedule() {
             value={enabled}
             onValueChange={handleToggle}
             disabled={loading}
-            trackColor={{ false: colors.border, true: colors.primary }}
+            trackColor={{ false: colors.border, true: colors.accent }}
             thumbColor="#ffffff"
           />
         </View>
@@ -188,9 +188,9 @@ export default function StudySchedule() {
         {enabled && (
           <View
             style={{
-              padding: 16,
+              padding: 18,
               backgroundColor: colors.card,
-              borderRadius: 16,
+              borderRadius: 12,
               borderWidth: 1,
               borderColor: colors.border,
               marginTop: 12,
@@ -200,7 +200,6 @@ export default function StudySchedule() {
               Reminder Time
             </Text>
 
-            {/* Time Picker Button Container */}
             <TouchableOpacity
               onPress={() => setShowPicker(true)}
               activeOpacity={0.8}
@@ -209,33 +208,32 @@ export default function StudySchedule() {
                 alignItems: "center",
                 justifyContent: "space-between",
                 padding: 14,
-                borderRadius: 12,
+                borderRadius: 10,
                 backgroundColor: colors.bg,
                 borderWidth: 1,
                 borderColor: colors.border,
               }}
             >
               <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <Feather name="clock" size={20} color={colors.primary || colors.text} style={{ marginRight: 10 }} />
+                <Clock size={18} color={colors.accent} style={{ marginRight: 10 }} />
                 <Text style={{ color: colors.text, fontSize: 22, fontWeight: "700" }}>
                   {formatTime(reminderTime)}
                 </Text>
               </View>
               <View
                 style={{
-                  backgroundColor: colors.button,
+                  backgroundColor: colors.accentSoft,
                   paddingHorizontal: 14,
                   paddingVertical: 8,
                   borderRadius: 8,
                 }}
               >
-                <Text style={{ color: colors.buttonText, fontSize: 13, fontWeight: "600" }}>
-                  Set Time
+                <Text style={{ color: colors.accent, fontSize: 13, fontWeight: "700" }}>
+                  Change
                 </Text>
               </View>
             </TouchableOpacity>
 
-            {/* Android Native Time Picker */}
             {Platform.OS === "android" && showPicker && (
               <DateTimePicker
                 value={reminderTime}
@@ -246,7 +244,6 @@ export default function StudySchedule() {
               />
             )}
 
-            {/* iOS Time Picker Modal */}
             {Platform.OS === "ios" && (
               <Modal
                 transparent={true}
@@ -264,9 +261,9 @@ export default function StudySchedule() {
                   <View
                     style={{
                       backgroundColor: colors.card,
-                      borderTopLeftRadius: 20,
-                      borderTopRightRadius: 20,
-                      padding: 20,
+                      borderTopLeftRadius: 16,
+                      borderTopRightRadius: 16,
+                      padding: 24,
                       alignItems: "center",
                     }}
                   >
@@ -278,11 +275,11 @@ export default function StudySchedule() {
                         marginBottom: 10,
                       }}
                     >
-                      <Text style={{ color: colors.text, fontSize: 18, fontWeight: "700" }}>
+                      <Text style={{ color: colors.text, fontSize: 17, fontWeight: "700" }}>
                         Select Time
                       </Text>
                       <TouchableOpacity onPress={() => setShowPicker(false)}>
-                        <Text style={{ color: colors.primary || "#007AFF", fontSize: 16, fontWeight: "600" }}>
+                        <Text style={{ color: colors.accent, fontSize: 16, fontWeight: "600" }}>
                           Done
                         </Text>
                       </TouchableOpacity>
@@ -306,20 +303,19 @@ export default function StudySchedule() {
               disabled={loading}
               style={{
                 marginTop: 20,
-                backgroundColor: colors.button,
+                backgroundColor: colors.accent,
                 paddingVertical: 14,
-                borderRadius: 100,
+                borderRadius: 12,
                 opacity: loading ? 0.7 : 1,
               }}
             >
-              <Text style={{ color: colors.buttonText, fontWeight: "700", textAlign: "center", fontSize: 15 }}>
-                Save Time
+              <Text style={{ color: "#FFFFFF", fontWeight: "700", textAlign: "center", fontSize: 15 }}>
+                Save Reminder
               </Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
-
