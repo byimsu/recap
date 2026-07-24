@@ -496,7 +496,7 @@ export default function Deadlines() {
                 <Text style={{ color: colors.text, fontSize: 13, fontWeight: "600", marginBottom: 8 }}>
                   Subject (optional)
                 </Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }} keyboardShouldPersistTaps="handled">
                   <TouchableOpacity
                     onPress={() => setNewSubjectId(null)}
                     style={{
