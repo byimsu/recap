@@ -22,12 +22,12 @@
 Recap is currently undergoing a complete UI/UX redesign inspired by modern productivity applications.
 
 The redesign focuses on:
-Cleaner layouts
-Better typography
-Faster navigation
-Improved accessibility
-Smooth animations
-Modern design system
+- Cleaner layouts
+- Better typography
+- Faster navigation
+- Improved accessibility
+- Smooth animations
+- Modern design system
 
 ## Overview
 
