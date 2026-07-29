@@ -12,8 +12,6 @@
     <img src="https://img.shields.io/badge/Expo-SDK%2056-000020?logo=expo" />
     <img src="https://img.shields.io/badge/Node.js-18+-339933?logo=node.js&logoColor=white" />
     <img src="https://img.shields.io/badge/Firebase-v12-FFCA28?logo=firebase&logoColor=black" />
-    <img src="https://img.shields.io/github/license/byimsu/recap" />
-    <img src="https://img.shields.io/github/last-commit/byimsu/recap" />
   </p>
 </p>
 
