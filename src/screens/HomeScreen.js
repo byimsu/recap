@@ -297,7 +297,7 @@ export default function HomeScreen() {
                   </View>
                 </View>
                 <Text style={[styles.metricValue, { color: colors.text }]}>
-                  {todayMinutes > 0 ? `${todayMinutes}m` : '0m'}
+                  {todayMinutes > 0 ? `${Math.round(todayMinutes)}m` : '0m'}
                 </Text>
               </AnimatedPressable>
 
