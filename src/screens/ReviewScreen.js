@@ -34,7 +34,7 @@ export default function ReviewScreen() {
     timeLoggedRef.current = true;
 
     const timeSpentMs = Date.now() - startTimeRef.current;
-    const minutesSpent = Math.max(1, Math.round(timeSpentMs / 60000));
+    const minutesSpent = timeSpentMs / 60000;
 
     try {
       await saveStudyMinutes(minutesSpent);

@@ -96,8 +96,8 @@ export default function UserProgress() {
       }
     });
 
-    const hours = Math.floor(totalMonthMinutes / 60);
-    const mins = totalMonthMinutes % 60;
+    const hours = Math.floor(Math.round(totalMonthMinutes) / 60);
+    const mins = Math.round(totalMonthMinutes) % 60;
     return { hours, mins, totalMonthMinutes };
   }, [studyData]);
 
@@ -228,7 +228,7 @@ export default function UserProgress() {
             const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
             const dayMonth = dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'long' });
 
-            const mins = selectedDay.minutes;
+            const mins = Math.round(selectedDay.minutes);
             const notesReviewed = mins > 0 ? Math.max(1, Math.round(mins / 14)) : 0;
             const flashcardsStudied = mins > 0 ? Math.max(2, Math.round(mins * 0.45)) : 0;
 

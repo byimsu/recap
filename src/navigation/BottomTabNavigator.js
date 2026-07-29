@@ -1,20 +1,23 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import UserProgress from '../screens/UserProgress';
 import Notes from '../screens/Notes';
 import ProfileScreen from '../screens/ProfileScreen';
 import FloatingBottomBar from '../components/navigation/FloatingBottomBar';
+import { useTheme } from '../context/ThemeContext';
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 export default function BottomTabNavigator() {
+  const { colors } = useTheme();
+
   return (
     <Tab.Navigator
+      tabBarPosition="bottom"
       tabBar={(props) => <FloatingBottomBar {...props} />}
       screenOptions={{
-        headerShown: false,
-        tabBarShowLabel: false,
+        sceneStyle: { backgroundColor: colors.bg },
       }}
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} />
