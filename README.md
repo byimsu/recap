@@ -18,16 +18,6 @@
 </p>
 
 ---
-## UI Redesign in Progress
-Recap is currently undergoing a complete UI/UX redesign inspired by modern productivity applications.
-
-The redesign focuses on:
-- Cleaner layouts
-- Better typography
-- Faster navigation
-- Improved accessibility
-- Smooth animations
-- Modern design system
 
 ## Overview
 
@@ -35,7 +25,7 @@ Recap is a cross-platform mobile application designed to help students stay orga
 
 Built with **React Native**, **Expo**, and **Firebase**, the project emphasizes a clean architecture, offline functionality, and a modern mobile experience.
 
-> **Project Status:** Active Development (UI Redesign)
+> **Project Status:** Active Development
 
 ---
 
