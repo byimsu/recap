@@ -104,17 +104,25 @@ export default function HomeScreen() {
     useCallback(() => {
       const loadData = async () => {
         try {
-          const { subjects: loadedSubjects } = await loadSubjectsWithNoteCounts();
+          const [
+            { subjects: loadedSubjects },
+            parsedNotes,
+            allDeadlines,
+            studyData,
+          ] = await Promise.all([
+            loadSubjectsWithNoteCounts(),
+            getAllNotes(),
+            getAllDeadlines(),
+            getLocalStudyData(),
+          ]);
+
           setSubjects(loadedSubjects);
 
-          const parsedNotes = await getAllNotes();
           const sortedNotes = parsedNotes.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           setRecentNotes(sortedNotes.slice(0, 5));
 
-          const allDeadlines = await getAllDeadlines();
           setUpcoming(upcomingDeadlines(allDeadlines, 2));
 
-          const studyData = await getLocalStudyData();
           const todayStr = formatLocalDate(new Date());
           setTodayMinutes(studyData[todayStr] || 0);
         } catch (error) {

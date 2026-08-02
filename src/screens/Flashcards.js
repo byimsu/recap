@@ -4,7 +4,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Modal, A
 import { ArrowLeft, Layers, Plus } from 'lucide-react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Haptics from 'expo-haptics';
-import { getAllDecks, createDeck, deleteDeck } from '../data/flashcardsData';
+import { getAllDecks, createDeck, deleteDeck, syncDecksFromFirebase } from '../data/flashcardsData';
 import { useTheme } from '../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -27,6 +27,11 @@ export default function Flashcards() {
       setIsLoading(true);
       const loadedDecks = await getAllDecks();
       setDecks(loadedDecks);
+      
+      const mergedDecks = await syncDecksFromFirebase();
+      if (mergedDecks) {
+        setDecks(mergedDecks);
+      }
     } catch (error) {
       console.error("Error loading local decks:", error);
     } finally {

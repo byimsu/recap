@@ -4,7 +4,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   TouchableOpacity,
   Alert
 } from 'react-native';
@@ -128,22 +128,27 @@ export default function TrashScreen() {
         <Text style={[styles.subtitle, { color: colors.subtext }]}>Deleted items are permanently removed after 30 days.</Text>
 
         {/* Trashed Items List */}
-        <ScrollView showsVerticalScrollIndicator={false} style={styles.scrollArea}>
-          {trashedNotes.length === 0 ? (
-            <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Trash2 size={30} color={colors.border} />
-              <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing in the trash</Text>
-              <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
-                Deleted items will appear here for 30 days before being permanently removed.
-              </Text>
-            </View>
-          ) : (
-            trashedNotes.map((note) => {
+        {trashedNotes.length === 0 ? (
+          <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Trash2 size={30} color={colors.border} />
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>Nothing in the trash</Text>
+            <Text style={[styles.emptySubtitle, { color: colors.subtext }]}>
+              Deleted items will appear here for 30 days before being permanently removed.
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={trashedNotes}
+            keyExtractor={(item) => item.id}
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollArea}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            renderItem={({ item: note }) => {
               const daysInTrash = Math.floor((new Date() - new Date(note.deletedAt)) / (1000 * 60 * 60 * 24));
               const daysLeft = 30 - daysInTrash;
 
               return (
-                <View key={note.id} style={[styles.trashCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.trashCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <View style={styles.cardInfo}>
                     <Text style={[styles.cardTitle, { color: colors.text }]} numberOfLines={1}>{note.name}</Text>
                     <Text style={{ color: colors.danger, fontSize: 12, marginTop: 3, fontWeight: '500' }}>
@@ -168,10 +173,9 @@ export default function TrashScreen() {
                   </View>
                 </View>
               );
-            })
-          )}
-          <View style={{ height: 40 }} />
-        </ScrollView>
+            }}
+          />
+        )}
       </View>
     </SafeAreaView>
   );

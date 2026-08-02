@@ -4,6 +4,10 @@ import { auth, isFirebaseReady } from '../api/firebase';
 import { isLocalGuestActive, setLocalGuestActive } from '../storage/authStorage';
 import * as authService from '../services/authService';
 import { getAuthErrorMessage } from '../utils/authErrors';
+import { syncDecksFromFirebase } from '../data/flashcardsData';
+import { syncDeadlinesFromFirebase } from '../data/deadlinesData';
+import { syncTextNotesFromFirebase } from '../data/textNotesData';
+import { syncFromFirebase as syncStudyFromFirebase } from '../storage/studyStorage';
 
 const AuthContext = createContext();
 
@@ -40,6 +44,13 @@ export const AuthProvider = ({ children }) => {
     try {
       if (firebaseUser) {
         syncFirebaseUser(firebaseUser);
+        // Pull all remote data in the background so every screen has fresh data
+        Promise.all([
+          syncDecksFromFirebase({ force: true }),
+          syncDeadlinesFromFirebase({ force: true }),
+          syncTextNotesFromFirebase({ force: true }),
+          syncStudyFromFirebase(),
+        ]).catch((e) => console.error('Initial sync error:', e));
       } else {
         await syncGuestUser();
       }

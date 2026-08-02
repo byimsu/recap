@@ -3,6 +3,7 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 import HomeScreen from '../screens/HomeScreen';
 import UserProgress from '../screens/UserProgress';
 import Notes from '../screens/Notes';
+import TextNotesScreen from '../screens/TextNotesScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import FloatingBottomBar from '../components/navigation/FloatingBottomBar';
 import { useTheme } from '../context/ThemeContext';
@@ -22,6 +23,7 @@ export default function BottomTabNavigator() {
     >
       <Tab.Screen name="HomeTab" component={HomeScreen} />
       <Tab.Screen name="NotesTab" component={Notes} />
+      <Tab.Screen name="TextNotesTab" component={TextNotesScreen} />
       <Tab.Screen name="ProgressTab" component={UserProgress} />
       <Tab.Screen name="ProfileTab" component={ProfileScreen} />
     </Tab.Navigator>

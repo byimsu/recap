@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { Check, X } from 'lucide-react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
-import { loadDeckCards, saveDeckCards, shuffleCards, getDueCards, rateCard } from '../data/reviewData';
+import { loadDeckCards, saveDeckCards, shuffleCards, getDueCards, rateCard, flushPendingReviewSync } from '../data/reviewData';
 import { saveStudyMinutes } from '../storage/studyStorage';
 import { useTheme } from '../context/ThemeContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -44,8 +44,16 @@ export default function ReviewScreen() {
   };
 
   useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextAppState => {
+      if (nextAppState === 'inactive' || nextAppState === 'background') {
+        flushPendingReviewSync();
+      }
+    });
+
     return () => {
+      subscription.remove();
       logAccumulatedTime();
+      flushPendingReviewSync();
     };
   }, []);
 

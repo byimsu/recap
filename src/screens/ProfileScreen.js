@@ -613,6 +613,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 5,
   },
+  guestChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   badgeText: {
     fontSize: 12,
     fontWeight: '600',

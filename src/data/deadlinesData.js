@@ -1,6 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getScopedKey } from '../storage/userStorage';
 import { createId } from '../utils/createId';
+import { auth, db } from '../api/firebase';
+import { isLocalGuestActive } from '../storage/authStorage';
+import {
+  collection,
+  doc,
+  getDocs,
+  setDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 
 const BASE_DEADLINES_KEY = '@study_deadlines';
 
@@ -44,6 +53,12 @@ export async function addDeadline(deadline) {
   };
   const updated = [newDeadline, ...existing];
   await AsyncStorage.setItem(deadlinesKey, JSON.stringify(updated));
+
+  // Sync to Firestore if logged in (not guest)
+  syncDeadlineToFirebase(newDeadline).catch((e) =>
+    console.error('Error syncing deadline to Firebase:', e)
+  );
+
   return updated;
 }
 
@@ -52,7 +67,81 @@ export async function deleteDeadline(deadlineId) {
   const existing = await getAllDeadlines();
   const updated = existing.filter((d) => d.id !== deadlineId);
   await AsyncStorage.setItem(deadlinesKey, JSON.stringify(updated));
+
+  deleteDeadlineFromFirebase(deadlineId).catch((e) =>
+    console.error('Error deleting synced deadline from Firebase:', e)
+  );
+
   return updated;
+}
+
+/**
+ * Writes a single deadline to Firestore at users/{uid}/deadlines/{id}.
+ * No-ops silently for guests or when Firebase isn't configured.
+ */
+async function syncDeadlineToFirebase(deadline) {
+  const user = auth?.currentUser;
+  const isGuest = await isLocalGuestActive();
+  if (!user || isGuest || !db) return;
+
+  const deadlineRef = doc(db, 'users', user.uid, 'deadlines', deadline.id);
+  await setDoc(deadlineRef, deadline, { merge: true });
+}
+
+async function deleteDeadlineFromFirebase(deadlineId) {
+  const user = auth?.currentUser;
+  const isGuest = await isLocalGuestActive();
+  if (!user || isGuest || !db) return;
+
+  const deadlineRef = doc(db, 'users', user.uid, 'deadlines', deadlineId);
+  await deleteDoc(deadlineRef);
+}
+
+/**
+ * One-time pull from Firestore into local storage, e.g. on login.
+ * Merges by id — remote deadlines are added to whatever exists locally.
+ */
+const SYNC_THROTTLE_MS = 30000;
+let _lastDeadlinesSyncAt = 0;
+
+export async function syncDeadlinesFromFirebase({ force = false } = {}) {
+  const now = Date.now();
+  if (!force && now - _lastDeadlinesSyncAt < SYNC_THROTTLE_MS) return null;
+
+  const user = auth?.currentUser;
+  const isGuest = await isLocalGuestActive();
+  if (!user || isGuest || !db) return null;
+
+  _lastDeadlinesSyncAt = now;
+
+  try {
+    const deadlinesCol = collection(db, 'users', user.uid, 'deadlines');
+    const snap = await getDocs(deadlinesCol);
+    const remoteDeadlines = snap.docs.map((d) => d.data());
+
+    const local = await getAllDeadlines();
+    const byId = new Map(local.map((d) => [d.id, d]));
+    remoteDeadlines.forEach((remote) => {
+      const existing = byId.get(remote.id);
+      if (existing) {
+        const localDate = new Date(existing.updatedAt || existing.createdAt || 0).getTime();
+        const remoteDate = new Date(remote.updatedAt || remote.createdAt || 0).getTime();
+        if (remoteDate >= localDate) {
+          byId.set(remote.id, remote);
+        }
+      } else {
+        byId.set(remote.id, remote);
+      }
+    });
+
+    const merged = Array.from(byId.values());
+    const deadlinesKey = await getScopedKey(BASE_DEADLINES_KEY);
+    await AsyncStorage.setItem(deadlinesKey, JSON.stringify(merged));
+    return merged;
+  } catch (e) {
+    console.error('Error syncing deadlines from Firebase:', e);
+    return null;
+  }
 }
 
 function todayDateString() {

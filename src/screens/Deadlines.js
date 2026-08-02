@@ -21,6 +21,7 @@ import {
   upcomingDeadlines,
   daysUntilLabel,
   DEADLINE_TYPE_META,
+  syncDeadlinesFromFirebase,
 } from "../data/deadlinesData";
 import { getAllSubjects } from "../data/subjectsData";
 import { useTheme } from '../context/ThemeContext';
@@ -122,6 +123,11 @@ export default function Deadlines() {
     setDeadlines(all);
     const loadedSubjects = await getAllSubjects();
     setSubjects(loadedSubjects);
+
+    const merged = await syncDeadlinesFromFirebase();
+    if (merged) {
+      setDeadlines(merged);
+    }
   }
 
   function changeMonth(delta) {
@@ -319,7 +325,7 @@ export default function Deadlines() {
         </Text>
         {upcoming.length === 0 ? (
           <Text style={{ color: colors.subtext, fontSize: 14 }}>
-          Nothing coming up. Tap a date above to add your first deadline.
+            Nothing coming up. Tap a date above to add your first deadline.
           </Text>
         ) : (
           upcoming.map((d) => {

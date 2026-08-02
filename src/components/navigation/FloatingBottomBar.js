@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSharedValue, withSpring } from 'react-native-reanimated';
-import { Home, BarChart2, BookOpen, User } from 'lucide-react-native';
+import { Home, BarChart2, BookOpen, User, NotebookPen } from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
 import AnimatedPill from './AnimatedPill';
 import BottomTab from './BottomTab';
@@ -10,6 +10,7 @@ import { SPRING_CONFIG, TAB_BAR_WIDTH, TAB_BAR_HEIGHT, PILL_SIZE } from './navig
 const ICON_MAP = {
   HomeTab: Home,
   NotesTab: BookOpen,
+  TextNotesTab: NotebookPen,
   ProgressTab: BarChart2,
   ProfileTab: User,
 };

@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs } from 'firebase/firestore';
 import {
   updateProfile as updateFirebaseAuthProfile,
   deleteUser as deleteFirebaseAuthUser,
@@ -155,45 +155,58 @@ export async function deleteAccount(user, password = '') {
   if (!user) throw new Error('No user provided for deletion.');
 
   const isGuest = isGuestUser(user);
+  let currentUser = null;
 
-  // 1. Delete Firebase Auth user FIRST if registered user
+  // 1. Re-authenticate first if registered user
   if (!isGuest) {
-    const currentUser = auth?.currentUser;
-    if (currentUser) {
-      if (password && currentUser.email) {
-        try {
-          const credential = EmailAuthProvider.credential(currentUser.email, password);
-          await reauthenticateWithCredential(currentUser, credential);
-        } catch (reauthErr) {
-          if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential') {
-            const customError = new Error('Incorrect password. Please enter your correct password to confirm deletion.');
-            customError.code = reauthErr.code;
-            throw customError;
-          }
-          throw reauthErr;
-        }
-      }
-
+    currentUser = auth?.currentUser;
+    if (currentUser && password && currentUser.email) {
       try {
-        await deleteFirebaseAuthUser(currentUser);
-      } catch (authError) {
-        if (authError?.code === 'auth/requires-recent-login') {
-          const customError = new Error('Re-authentication required. Please enter your password to confirm account deletion.');
-          customError.code = 'auth/requires-recent-login';
+        const credential = EmailAuthProvider.credential(currentUser.email, password);
+        await reauthenticateWithCredential(currentUser, credential);
+      } catch (reauthErr) {
+        if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential') {
+          const customError = new Error('Incorrect password. Please enter your correct password to confirm deletion.');
+          customError.code = reauthErr.code;
           throw customError;
         }
-        throw authError;
+        throw reauthErr;
       }
     }
   }
 
-  // 2. Delete Firestore user document if registered user
+  // 2. Delete Firestore data (documents & subcollections) BEFORE deleting Auth user
   if (!isGuest && db && user.uid) {
     try {
+      // Helper to delete all docs in a collection
+      const deleteCollection = async (collectionRef) => {
+        const snap = await getDocs(collectionRef);
+        const deletePromises = snap.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+        return snap.docs;
+      };
+
+      // 2a. Delete 'deadlines' subcollection
+      await deleteCollection(collection(db, 'users', user.uid, 'deadlines'));
+
+      // 2b. Delete 'textNotes' subcollection
+      await deleteCollection(collection(db, 'users', user.uid, 'textNotes'));
+
+      // 2c. Delete 'decks' and their 'cards' subcollections
+      const decksCol = collection(db, 'users', user.uid, 'decks');
+      const decksSnap = await getDocs(decksCol);
+      for (const deckDoc of decksSnap.docs) {
+        const cardsCol = collection(db, 'users', user.uid, 'decks', deckDoc.id, 'cards');
+        await deleteCollection(cardsCol);
+        await deleteDoc(deckDoc.ref);
+      }
+
+      // 2d. Finally, delete the parent user document
       const userRef = doc(db, 'users', user.uid);
       await deleteDoc(userRef);
     } catch (e) {
-      console.error('Error deleting Firestore user document:', e);
+      console.error('Error deleting Firestore data during account deletion:', e);
+      // We log but don't strictly throw, to ensure we at least try to delete the Auth user
     }
   }
 
@@ -209,7 +222,21 @@ export async function deleteAccount(user, password = '') {
     console.error('Error deleting local profile image:', e);
   }
 
-  // 4. Clear local AsyncStorage
+  // 4. Delete Firebase Auth user LAST
+  if (!isGuest && currentUser) {
+    try {
+      await deleteFirebaseAuthUser(currentUser);
+    } catch (authError) {
+      if (authError?.code === 'auth/requires-recent-login') {
+        const customError = new Error('Re-authentication required. Please enter your password to confirm account deletion.');
+        customError.code = 'auth/requires-recent-login';
+        throw customError;
+      }
+      throw authError;
+    }
+  }
+
+  // 5. Clear local AsyncStorage
   try {
     await AsyncStorage.clear();
   } catch (e) {

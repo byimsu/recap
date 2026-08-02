@@ -18,6 +18,7 @@ import BottomTabNavigator from "./src/navigation/BottomTabNavigator";
 import ReviewScreen from "./src/screens/ReviewScreen";
 import AddCardScreen from "./src/screens/AddCardScreen";
 import SubjectNotesScreen from "./src/screens/SubjectNotesScreen";
+import TextNoteEditorScreen from "./src/screens/TextNoteEditorScreen";
 import DeckDetailScreen from './src/screens/DeckDetailScreen';
 import Settings from "./src/screens/Settings";
 import Trash from "./src/screens/Trash";
@@ -63,6 +64,7 @@ function RootNavigator() {
             <Stack.Screen name="UserProgress" component={UserProgress} />
             <Stack.Screen name="Notes" component={Notes} />
             <Stack.Screen name="SubjectNotes" component={SubjectNotesScreen} />
+            <Stack.Screen name="TextNoteEditor" component={TextNoteEditorScreen} />
             <Stack.Screen name="Flashcards" component={Flashcards} />
             <Stack.Screen name="AddCard" component={AddCardScreen} />
             <Stack.Screen name="Review" component={ReviewScreen} />
