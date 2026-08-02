@@ -16,7 +16,7 @@
         "backgroundImage": "./src/assets/android-icon-background.png",
         "monochromeImage": "./src/assets/android-icon-monochrome.png"
       },
-      "package": "com.imsu.recap"
+      "package": "com.recap.app"
     },
     "web": {
       "favicon": "./src/assets/favicon.png"

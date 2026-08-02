@@ -41,40 +41,34 @@ export const ThemeProvider = ({ children }) => {
   const theme = userTheme || systemColorScheme || 'light';
 
   const toggleTheme = useCallback(async () => {
-    setUserTheme((prevTheme) => {
-      const current = prevTheme || systemColorScheme || 'light';
-      const nextTheme = current === 'light' ? 'dark' : 'light';
-      AsyncStorage.setItem(THEME_KEY, nextTheme);
-      return nextTheme;
-    });
-  }, [systemColorScheme]);
+    const current = userTheme || systemColorScheme || 'light';
+    const nextTheme = current === 'light' ? 'dark' : 'light';
+    setUserTheme(nextTheme);
+    AsyncStorage.setItem(THEME_KEY, nextTheme).catch(console.error);
+  }, [userTheme, systemColorScheme]);
 
   const setSystemTheme = useCallback(async (useSystem) => {
     if (useSystem) {
       setUserTheme(null);
-      await AsyncStorage.setItem(THEME_KEY, 'system');
+      await AsyncStorage.setItem(THEME_KEY, 'system').catch(console.error);
     } else {
       const currentTheme = theme;
       setUserTheme(currentTheme);
-      await AsyncStorage.setItem(THEME_KEY, currentTheme);
+      await AsyncStorage.setItem(THEME_KEY, currentTheme).catch(console.error);
     }
   }, [theme]);
 
   const toggleAmoled = useCallback(async () => {
-    setIsAmoled((prev) => {
-      const nextAmoled = !prev;
-      AsyncStorage.setItem(AMOLED_KEY, nextAmoled.toString());
-      return nextAmoled;
-    });
-  }, []);
+    const nextAmoled = !isAmoled;
+    setIsAmoled(nextAmoled);
+    AsyncStorage.setItem(AMOLED_KEY, nextAmoled.toString()).catch(console.error);
+  }, [isAmoled]);
 
   const toggleHaptics = useCallback(async () => {
-    setIsHapticsEnabled((prev) => {
-      const nextHaptics = !prev;
-      AsyncStorage.setItem(HAPTICS_KEY, nextHaptics.toString());
-      return nextHaptics;
-    });
-  }, []);
+    const nextHaptics = !isHapticsEnabled;
+    setIsHapticsEnabled(nextHaptics);
+    AsyncStorage.setItem(HAPTICS_KEY, nextHaptics.toString()).catch(console.error);
+  }, [isHapticsEnabled]);
 
   const colors = useMemo(() => ({
     // Backgrounds & Surfaces
